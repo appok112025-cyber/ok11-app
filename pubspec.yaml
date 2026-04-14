@@ -1,0 +1,52 @@
+name: ok11
+description: "Fan engagement app"
+
+publish_to: "none"
+
+version: 1.0.0+7
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  cached_network_image: ^3.4.1
+  firebase_analytics: ^12.0.4
+  firebase_auth: ^6.0.1
+  firebase_core: ^4.0.0
+  firebase_crashlytics: ^5.0.4
+  firebase_messaging: ^16.0.4
+  flutter:
+    sdk: flutter
+  flutter_local_notifications: ^19.5.0
+  flutter_svg: ^2.2.0
+  get: ^4.7.2
+  google_fonts: ^6.3.2
+  google_sign_in: ^7.2.0
+  http: ^1.6.0
+  package_info_plus: ^9.0.0
+  shared_preferences: ^2.5.3
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  custom_lint: ^0.8.0
+  flutter_lints: ^6.0.0
+  flutter_native_splash: ^2.4.7
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/
+    - assets/images/
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/images/logo.png
+  color_dark: "#FFFFFF"
+  image_dark: assets/images/logo.png
+  android_12:
+    image: assets/images/logo.png
+    color: "#FFFFFF"
+    icon_background_color: "#FFFFFF"

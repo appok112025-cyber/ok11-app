@@ -1,0 +1,177 @@
+import 'package:ok11/app/data/models/quiz_question.dart';
+import 'package:ok11/app/utils/status_theme.dart';
+
+class PlayerData {
+  final String id;
+  final String name;
+
+  PlayerData({required this.id, required this.name});
+
+  factory PlayerData.fromJson(dynamic json) {
+    if (json is String) {
+      return PlayerData(id: json, name: json);
+    } else if (json is Map) {
+      final id =
+          json['_id'] as String? ?? json['id'] as String? ?? json.toString();
+      final name = json['name'] as String? ?? id;
+      return PlayerData(id: id, name: name);
+    }
+    return PlayerData(id: json.toString(), name: json.toString());
+  }
+}
+
+class MatchData {
+  final String? id;
+  final String title;
+  final String? matchName;
+  final String team1;
+  final String team2;
+  final String? team1ImageUrl;
+  final String? team2ImageUrl;
+  final String date;
+  final String time;
+  final int score;
+  final MatchStatus status;
+  final int? participantsCount;
+  final List<String> team1Players;
+  final List<String> team2Players;
+  final List<PlayerData> team1PlayerData;
+  final List<PlayerData> team2PlayerData;
+  final List<QuizQuestion> quizzes;
+
+  MatchData({
+    this.id,
+    required this.title,
+    this.matchName,
+    required this.team1,
+    required this.team2,
+    this.team1ImageUrl,
+    this.team2ImageUrl,
+    required this.date,
+    required this.time,
+    required this.score,
+    required this.status,
+    this.participantsCount,
+    this.team1Players = const [],
+    this.team2Players = const [],
+    this.team1PlayerData = const [],
+    this.team2PlayerData = const [],
+    this.quizzes = const [],
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'matchName': matchName,
+    'team1': team1,
+    'team2': team2,
+    'team1ImageUrl': team1ImageUrl,
+    'team2ImageUrl': team2ImageUrl,
+    'date': date,
+    'time': time,
+    'score': score,
+    'status': status.name,
+    'participantsCount': participantsCount,
+    'team1Players': team1Players,
+    'team2Players': team2Players,
+    'quizzes': quizzes
+        .map((q) => {'question': q.question, 'options': q.options})
+        .toList(),
+  };
+
+  factory MatchData.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      throw Exception('MatchData is null');
+    }
+    final statusStr = json['status'] as String?;
+    MatchStatus status = MatchStatus.upcoming;
+    if (statusStr != null) {
+      try {
+        status = MatchStatus.values.firstWhere(
+          (e) => e.name.toLowerCase() == statusStr.toLowerCase(),
+          orElse: () => MatchStatus.upcoming,
+        );
+      } catch (e) {
+        status = MatchStatus.upcoming;
+      }
+    }
+    final players = json['players'] as Map<String, dynamic>?;
+    final team1PlayersList = <String>[];
+    final team2PlayersList = <String>[];
+    final team1PlayerDataList = <PlayerData>[];
+    final team2PlayerDataList = <PlayerData>[];
+
+    if (players != null) {
+      final teamAPlayers = players['teamA'] as List<dynamic>? ?? [];
+      final teamBPlayers = players['teamB'] as List<dynamic>? ?? [];
+
+      for (var player in teamAPlayers) {
+        final playerData = PlayerData.fromJson(player);
+        team1PlayerDataList.add(playerData);
+        team1PlayersList.add(playerData.name);
+      }
+
+      for (var player in teamBPlayers) {
+        final playerData = PlayerData.fromJson(player);
+        team2PlayerDataList.add(playerData);
+        team2PlayersList.add(playerData.name);
+      }
+    }
+
+    final quizzesList = <QuizQuestion>[];
+    final quizzes = json['quizzes'] as List<dynamic>?;
+    if (quizzes != null) {
+      for (var quiz in quizzes) {
+        if (quiz is Map) {
+          final question = quiz['question'] as String? ?? '';
+          final optionsData = quiz['options'] as List<dynamic>? ?? [];
+          final options = <String>[];
+
+          for (var opt in optionsData) {
+            if (opt is String) {
+              options.add(opt);
+            } else if (opt is Map) {
+              final text = opt['text'] as String?;
+              if (text != null) options.add(text);
+            }
+          }
+
+          if (question.isNotEmpty && options.isNotEmpty) {
+            final quizId =
+                quiz['quizId'] as String? ??
+                quiz['_id'] as String? ??
+                quiz['id'] as String? ??
+                quiz['questionId'] as String?;
+            quizzesList.add(
+              QuizQuestion(
+                quizId: quizId,
+                question: question,
+                options: options,
+              ),
+            );
+          }
+        }
+      }
+    }
+
+    return MatchData(
+      id: json['id'] as String? ?? json['_id'] as String?,
+      title: (json['title'] as String?) ?? '',
+      matchName: json['matchName'] as String?,
+      team1: (json['team1'] as String?) ?? '',
+      team2: (json['team2'] as String?) ?? '',
+      team1ImageUrl: json['team1ImageUrl'] as String?,
+      team2ImageUrl: json['team2ImageUrl'] as String?,
+      date: (json['date'] as String?) ?? 'TBD',
+      time: (json['time'] as String?) ?? 'TBD',
+      score: (json['score'] as int?) ?? 0,
+      status: status,
+      participantsCount: json['participantsCount'] as int?,
+      team1Players: team1PlayersList,
+      team2Players: team2PlayersList,
+      team1PlayerData: team1PlayerDataList,
+      team2PlayerData: team2PlayerDataList,
+      quizzes: quizzesList,
+    );
+  }
+}
