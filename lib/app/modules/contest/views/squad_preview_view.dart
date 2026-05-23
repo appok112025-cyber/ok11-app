@@ -220,23 +220,6 @@ class SquadPreviewView extends StatelessWidget {
             ),
           ),
 
-          // ── FLOATING DOWNLOAD BUTTON ──
-          Positioned(
-            bottom: 24,
-            right: 24,
-            child: FloatingActionButton.extended(
-              onPressed: _captureAndDownloadImage,
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF0F1923),
-              elevation: 4,
-              icon: const Icon(Icons.download_rounded, color: Colors.green),
-              label: const Text(
-                'DOWNLOAD SQUAD',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
-              ),
-            ),
-          ),
-
           // ── APPBAR CLOSE BUTTON ──
           Positioned(
             top: MediaQuery.of(context).padding.top + 12,
@@ -316,19 +299,20 @@ class SquadPreviewView extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white10,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white24),
-            ),
-            child: const Text(
-              'PTS',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 9,
-                fontWeight: FontWeight.w900,
+          // Download icon button
+          GestureDetector(
+            onTap: _captureAndDownloadImage,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white24),
+              ),
+              child: const Icon(
+                Icons.download_rounded,
+                color: Colors.greenAccent,
+                size: 18,
               ),
             ),
           ),
