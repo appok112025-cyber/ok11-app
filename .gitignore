@@ -44,3 +44,5 @@ lib/firebase_options.dart
 # Environment
 .env
 .env.*
+flutter_01.png
+.vscode/
