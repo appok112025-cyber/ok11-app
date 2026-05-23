@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:ok11/app/config/api_config.dart';
 import 'package:ok11/app/services/firebase_service.dart';
+import 'package:ok11/app/routes/app_pages.dart';
+import 'package:ok11/app/stores/auth_store.dart';
 
 class _NetworkException implements Exception {
   final String message;
@@ -326,6 +328,24 @@ class ApiService extends GetxService {
       'body': body.length > 500 ? '${body.substring(0, 500)}...' : body,
       'timestamp': DateTime.now().toIso8601String(),
     };
+
+    if (statusCode == 401) {
+      try {
+        final decoded = jsonDecode(body);
+        if (decoded is Map && (decoded['code'] == 'TOKEN_EXPIRED' || decoded['error'] == 'Token has expired' || decoded['error']?.toString().contains('expired') == true)) {
+          debugPrint('⚠️ Token expired detected in ApiService! Logging out user...');
+          Future.microtask(() async {
+            if (Get.isRegistered<AuthStore>()) {
+              final authStore = Get.find<AuthStore>();
+              await authStore.clearAuth();
+              Get.offAllNamed(Routes.LOGIN);
+            }
+          });
+        }
+      } catch (e) {
+        debugPrint('Error parsing 401 body: $e');
+      }
+    }
 
     if (isSuccess) {
       _firebaseService.logBreadcrumb(
