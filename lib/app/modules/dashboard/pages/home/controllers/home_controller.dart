@@ -148,8 +148,8 @@ class HomeController extends GetxController {
       await Future.wait(loadedMatches.map((match) async {
         if (match.id != null) {
           final contests = await contestRepo.getContestsForMatch(match.id!);
-          final hasActiveContest = contests.any((c) => !c.isLocked);
-          if (hasActiveContest) {
+          final hasContest = contests.isNotEmpty;
+          if (hasContest) {
             filteredMatches.add(match);
           }
         }
@@ -158,7 +158,7 @@ class HomeController extends GetxController {
       matches.value = _sortMatches(filteredMatches);
       await _repository.cacheUpcomingMatches(filteredMatches);
       debugPrint(
-        '✅ HomeController.loadMatches: ${matches.length} upcoming matches with active contests (out of ${loadedMatches.length} raw matches)',
+        '✅ HomeController.loadMatches: ${matches.length} upcoming matches with contests (out of ${loadedMatches.length} raw matches)',
       );
 
       await _submissionService.refreshSubmissions();
@@ -190,8 +190,8 @@ class HomeController extends GetxController {
       await Future.wait(loadedMatches.map((match) async {
         if (match.id != null) {
           final contests = await contestRepo.getContestsForMatch(match.id!);
-          final hasActiveContest = contests.any((c) => !c.isLocked);
-          if (hasActiveContest) {
+          final hasContest = contests.isNotEmpty;
+          if (hasContest) {
             filteredMatches.add(match);
           }
         }
@@ -200,7 +200,7 @@ class HomeController extends GetxController {
       matches.value = _sortMatches(filteredMatches);
       await _repository.cacheUpcomingMatches(filteredMatches);
       debugPrint(
-        '✅ HomeController.refreshMatches: ${matches.length} upcoming matches with active contests (out of ${loadedMatches.length} raw matches)',
+        '✅ HomeController.refreshMatches: ${matches.length} upcoming matches with contests (out of ${loadedMatches.length} raw matches)',
       );
 
       await _submissionService.refreshSubmissions();
