@@ -47,11 +47,13 @@ void _viewUserSquad(BuildContext context, LeaderboardEntryModel entry) {
 
   // 3. Find players in the entry
   final contestCtrl = Get.find<ContestController>();
+  
+  // Try to match players from allPlayerInfo; fall back if not yet loaded
   final playersList = entry.players.map((id) {
     return contestCtrl.allPlayerInfo.firstWhereOrNull((p) => p.id == id);
   }).whereType<PlayerInfo>().toList();
 
-  if (playersList.isEmpty) {
+  if (playersList.isEmpty && entry.players.isEmpty) {
     Get.snackbar(
       'Unavailable',
       'This user has not selected a squad yet.',
@@ -59,6 +61,21 @@ void _viewUserSquad(BuildContext context, LeaderboardEntryModel entry) {
       backgroundColor: const Color(0xFFE53935),
       colorText: Colors.white,
     );
+    return;
+  }
+  
+  // If players exist but couldn't be matched (player data not loaded yet),
+  // load player data first then re-open
+  if (playersList.isEmpty && entry.players.isNotEmpty) {
+    Get.snackbar(
+      'Loading',
+      'Loading squad details, please try again in a moment.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const Color(0xFF0F1923),
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2),
+    );
+    contestCtrl.setupForMatch(match);
     return;
   }
 
@@ -366,28 +383,39 @@ class _LeaderboardViewState extends State<LeaderboardView> {
   }
 
   Widget _buildPrizeBreakdown(ContestModel contest) {
-    if (contest.prizeBreakdown == null || contest.prizeBreakdown!.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.emoji_events_outlined, size: 48, color: Colors.grey.shade300),
-              const SizedBox(height: 12),
-              const Text(
-                'No prize distribution breakdown configured.',
-                style: TextStyle(color: Colors.grey, fontSize: 13, fontStyle: FontStyle.italic),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    // Build a default single-winner breakdown if none is configured
+    final hasBreakdown = contest.prizeBreakdown != null && contest.prizeBreakdown!.isNotEmpty;
+    final effectiveBreakdown = hasBreakdown
+        ? contest.prizeBreakdown!
+        : [
+            PrizeRange(fromRank: 1, toRank: 1, prizeAmount: contest.firstPrize),
+          ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (!hasBreakdown)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.amber.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: Colors.amber.shade700),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Prize breakdown not configured. Showing default: winner takes all.',
+                    style: TextStyle(fontSize: 12, color: Colors.amber.shade800, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+          ),
         Text(
           'Total Prize Pool: ₹${contest.firstPrize.toInt()}',
           style: TextStyle(
@@ -426,7 +454,7 @@ class _LeaderboardViewState extends State<LeaderboardView> {
                     ),
                   ],
                 ),
-                ...contest.prizeBreakdown!.map((range) {
+                ...effectiveBreakdown.map((range) {
                   final isFirst = range.fromRank == 1 && range.toRank == 1;
                   final rankText = range.fromRank == range.toRank 
                     ? 'Rank ${range.fromRank}' 
