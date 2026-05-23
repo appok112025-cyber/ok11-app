@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ok11/app/data/models/contest_model.dart';
 import 'package:ok11/app/data/models/match_data.dart';
+import 'package:ok11/app/data/repositories/match_repository.dart';
 import 'package:ok11/app/modules/contest/controllers/contest_controller.dart';
 import 'package:ok11/app/modules/contest/views/squad_preview_view.dart';
 import 'package:ok11/app/modules/dashboard/pages/match_detail/controllers/match_detail_controller.dart';
@@ -12,7 +13,7 @@ import 'package:ok11/app/utils/player_utils.dart';
 
 // ── SHARED LEADERBOARD BUILDERS ───────────────────────────────────
 
-void _viewUserSquad(BuildContext context, LeaderboardEntryModel entry) {
+Future<void> _viewUserSquad(BuildContext context, LeaderboardEntryModel entry) async {
   // 1. Find MatchDetailController to check match status
   if (!Get.isRegistered<MatchDetailController>()) {
     Get.snackbar(
@@ -26,7 +27,7 @@ void _viewUserSquad(BuildContext context, LeaderboardEntryModel entry) {
   }
   
   final matchDetailCtrl = Get.find<MatchDetailController>();
-  final match = matchDetailCtrl.matchData.value;
+  MatchData? match = matchDetailCtrl.matchData.value;
   if (match == null) return;
 
   // 2. Check if the match is started (i.e. status is not upcoming)
@@ -45,15 +46,26 @@ void _viewUserSquad(BuildContext context, LeaderboardEntryModel entry) {
     return;
   }
 
-  // 3. Find players in the entry
+  // 3. Ensure player data is loaded
   final contestCtrl = Get.find<ContestController>();
   
-  // Try to match players from allPlayerInfo; fall back if not yet loaded
+  // If allPlayerInfo is empty, the match was opened without full player data.
+  // Fetch the full match (which includes populated player objects) on demand.
+  if (contestCtrl.allPlayerInfo.isEmpty && match.id != null) {
+    final fullMatch = await MatchRepository().getMatchById(match.id!);
+    if (fullMatch != null) {
+      match = fullMatch;
+      matchDetailCtrl.matchData.value = fullMatch;
+      contestCtrl.setupForMatch(fullMatch);
+    }
+  }
+
+  // 4. Map leaderboard player IDs to PlayerInfo objects
   final playersList = entry.players.map((id) {
     return contestCtrl.allPlayerInfo.firstWhereOrNull((p) => p.id == id);
   }).whereType<PlayerInfo>().toList();
 
-  if (playersList.isEmpty && entry.players.isEmpty) {
+  if (entry.players.isEmpty) {
     Get.snackbar(
       'Unavailable',
       'This user has not selected a squad yet.',
@@ -63,28 +75,13 @@ void _viewUserSquad(BuildContext context, LeaderboardEntryModel entry) {
     );
     return;
   }
-  
-  // If players exist but couldn't be matched (player data not loaded yet),
-  // load player data first then re-open
-  if (playersList.isEmpty && entry.players.isNotEmpty) {
-    Get.snackbar(
-      'Loading',
-      'Loading squad details, please try again in a moment.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF0F1923),
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-    );
-    contestCtrl.setupForMatch(match);
-    return;
-  }
 
-  // 4. Open beautiful grass field SquadPreviewView
+  // 5. Open SquadPreviewView
   Get.to(() => SquadPreviewView(
     userName: entry.userName,
     teamLabel: 'T1',
     totalPoints: entry.points,
-    match: match,
+    match: match!,
     players: playersList,
     captainId: entry.captainId,
     viceCaptainId: entry.viceCaptainId,
