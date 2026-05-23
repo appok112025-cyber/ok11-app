@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:ok11/app/data/models/match_data.dart';
+import 'package:ok11/app/data/models/contest_model.dart';
 import 'package:ok11/app/data/repositories/submission_repository.dart';
+import 'package:ok11/app/data/repositories/contest_repository.dart';
 import 'package:ok11/app/routes/app_pages.dart';
 import 'package:ok11/app/services/firebase_service.dart';
 import 'package:ok11/app/utils/status_theme.dart';
@@ -9,14 +11,15 @@ import 'package:ok11/app/widgets/common/app_snackbars.dart';
 
 class MyMatchesController extends GetxController {
   final _submissionRepository = SubmissionRepository();
+  final _contestRepository = ContestRepository();
   final _firebaseService = Get.find<FirebaseService>();
   final selectedTab = 0.obs;
   final isLoading = true.obs;
 
-  final upcomingMatches = <MatchData>[].obs;
-  final liveMatches = <MatchData>[].obs;
-  final completedMatches = <MatchData>[].obs;
-  final currentMatches = <MatchData>[].obs;
+  final upcomingMatches = <MyJoinedItem>[].obs;
+  final liveMatches = <MyJoinedItem>[].obs;
+  final completedMatches = <MyJoinedItem>[].obs;
+  final currentMatches = <MyJoinedItem>[].obs;
 
   @override
   void onInit() {
@@ -31,18 +34,38 @@ class MyMatchesController extends GetxController {
     debugPrint('📥 MyMatchesController.loadMatches()');
     isLoading.value = true;
     try {
-      final allSubmissions = await _submissionRepository.getUserSubmissions();
+      // Fetch both quiz submissions and contest entries
+      final results = await Future.wait([
+        _submissionRepository.getUserSubmissions(),
+        _contestRepository.getAllJoinedMatches(),
+      ]);
 
-      upcomingMatches.value = allSubmissions
-          .where((match) => match.status == MatchStatus.upcoming)
+      final List<MatchData> quizSubmissions = results[0] as List<MatchData>;
+      final List<MyJoinedItem> contestItems = results[1] as List<MyJoinedItem>;
+
+      final List<MyJoinedItem> allItems = List<MyJoinedItem>.from(contestItems);
+      
+      final Set<String> contestMatchIds = contestItems
+          .map((item) => item.match.id)
+          .whereType<String>()
+          .toSet();
+
+      for (var m in quizSubmissions) {
+        if (m.id != null && !contestMatchIds.contains(m.id)) {
+          allItems.add(MyJoinedItem(match: m));
+        }
+      }
+
+      upcomingMatches.value = allItems
+          .where((item) => item.match.status == MatchStatus.upcoming)
           .toList();
 
-      liveMatches.value = allSubmissions
-          .where((match) => match.status == MatchStatus.live)
+      liveMatches.value = allItems
+          .where((item) => item.match.status == MatchStatus.live)
           .toList();
 
-      completedMatches.value = allSubmissions
-          .where((match) => match.status == MatchStatus.completed)
+      completedMatches.value = allItems
+          .where((item) => item.match.status == MatchStatus.completed)
           .toList();
 
       _updateCurrentMatches();
@@ -74,31 +97,42 @@ class MyMatchesController extends GetxController {
   Future<void> refreshMatches() async {
     debugPrint('🔄 MyMatchesController.refreshMatches()');
     try {
-      final allSubmissions = await _submissionRepository.getUserSubmissions();
+      final results = await Future.wait([
+        _submissionRepository.getUserSubmissions(),
+        _contestRepository.getAllJoinedMatches(),
+      ]);
 
-      upcomingMatches.value = allSubmissions
-          .where((match) => match.status == MatchStatus.upcoming)
+      final List<MatchData> quizSubmissions = results[0] as List<MatchData>;
+      final List<MyJoinedItem> contestItems = results[1] as List<MyJoinedItem>;
+
+      final List<MyJoinedItem> allItems = List<MyJoinedItem>.from(contestItems);
+      
+      final Set<String> contestMatchIds = contestItems
+          .map((item) => item.match.id)
+          .whereType<String>()
+          .toSet();
+
+      for (var m in quizSubmissions) {
+        if (m.id != null && !contestMatchIds.contains(m.id)) {
+          allItems.add(MyJoinedItem(match: m));
+        }
+      }
+
+      upcomingMatches.value = allItems
+          .where((item) => item.match.status == MatchStatus.upcoming)
           .toList();
 
-      liveMatches.value = allSubmissions
-          .where((match) => match.status == MatchStatus.live)
+      liveMatches.value = allItems
+          .where((item) => item.match.status == MatchStatus.live)
           .toList();
 
-      completedMatches.value = allSubmissions
-          .where((match) => match.status == MatchStatus.completed)
+      completedMatches.value = allItems
+          .where((item) => item.match.status == MatchStatus.completed)
           .toList();
 
       _updateCurrentMatches();
       debugPrint(
         '✅ MyMatchesController.refreshMatches: upcoming=${upcomingMatches.length}, live=${liveMatches.length}, completed=${completedMatches.length}',
-      );
-      _firebaseService.logBreadcrumb(
-        'My matches refreshed',
-        data: {
-          'upcoming': upcomingMatches.length,
-          'live': liveMatches.length,
-          'completed': completedMatches.length,
-        },
       );
     } catch (e) {
       debugPrint('❌ MyMatchesController.refreshMatches error: $e');
@@ -125,7 +159,7 @@ class MyMatchesController extends GetxController {
         currentMatches.assignAll(upcomingMatches.toList());
     }
     debugPrint(
-      '✅ MyMatchesController._updateCurrentMatches: ${currentMatches.length} matches',
+      '✅ MyMatchesController._updateCurrentMatches: ${currentMatches.length} items',
     );
   }
 }

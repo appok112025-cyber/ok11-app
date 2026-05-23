@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ok11/app/data/models/match_card_data.dart';
 import 'package:ok11/app/data/models/match_data.dart';
 import 'package:ok11/app/data/models/quiz_question.dart';
@@ -10,6 +11,38 @@ import 'package:ok11/app/utils/status_theme.dart';
 
 class MatchRepository {
   final _apiService = Get.find<ApiService>();
+
+  static List<MatchData> _inMemoryUpcoming = [];
+
+  List<MatchData> getInMemoryUpcomingMatches() => _inMemoryUpcoming;
+
+  Future<void> initCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedStr = prefs.getString('cached_upcoming_matches');
+      if (cachedStr != null) {
+        final List<dynamic> decoded = jsonDecode(cachedStr);
+        _inMemoryUpcoming = decoded
+            .map((item) => MatchData.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+        debugPrint('💾 MatchRepository: Loaded ${_inMemoryUpcoming.length} matches from cache');
+      }
+    } catch (e) {
+      debugPrint('🚨 MatchRepository.initCache error: $e');
+    }
+  }
+
+  Future<void> cacheUpcomingMatches(List<MatchData> matchesList) async {
+    _inMemoryUpcoming = matchesList;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final serialized = matchesList.map((m) => m.toJson()).toList();
+      await prefs.setString('cached_upcoming_matches', jsonEncode(serialized));
+      debugPrint('💾 MatchRepository: Saved ${matchesList.length} matches to cache');
+    } catch (e) {
+      debugPrint('🚨 MatchRepository.cacheUpcomingMatches error: $e');
+    }
+  }
 
   TeamData? _parseTeam(Map<String, dynamic>? teamJson) {
     if (teamJson == null) return null;
@@ -99,8 +132,13 @@ class MatchRepository {
         if (json == null) {
           return [];
         }
-        final data = json['data'] as Map<String, dynamic>?;
-        final matchesList = data?['data'] as List<dynamic>?;
+        final dynamic jsonData = json['data'];
+        List<dynamic>? matchesList;
+        if (jsonData is List) {
+          matchesList = jsonData;
+        } else if (jsonData is Map) {
+          matchesList = jsonData['data'] as List<dynamic>?;
+        }
 
         if (matchesList == null || matchesList.isEmpty) {
           return [];
@@ -223,8 +261,13 @@ class MatchRepository {
         if (json == null) {
           return [];
         }
-        final data = json['data'] as Map<String, dynamic>?;
-        final matchesList = data?['data'] as List<dynamic>?;
+        final dynamic jsonData = json['data'];
+        List<dynamic>? matchesList;
+        if (jsonData is List) {
+          matchesList = jsonData;
+        } else if (jsonData is Map) {
+          matchesList = jsonData['data'] as List<dynamic>?;
+        }
 
         if (matchesList == null || matchesList.isEmpty) {
           return [];
@@ -366,6 +409,16 @@ class MatchRepository {
             '✅ MatchRepository: Total quizzes parsed: ${quizzesList.length}',
           );
 
+          final playerPointsMap = <String, double>{};
+          final pointsJson = match['playerPoints'];
+          if (pointsJson is Map) {
+            pointsJson.forEach((key, value) {
+              if (value is num) {
+                playerPointsMap[key] = value.toDouble();
+              }
+            });
+          }
+
           return {
             'matchData': MatchData(
               id: match['_id'] as String? ?? match['id'] as String?,
@@ -385,6 +438,7 @@ class MatchRepository {
               team1PlayerData: team1PlayerDataList,
               team2PlayerData: team2PlayerDataList,
               quizzes: quizzesList,
+              playerPoints: playerPointsMap,
             ),
             'matchTime': matchTime ?? DateTime(0),
             'createdAt': match['createdAt'] != null
@@ -486,8 +540,11 @@ class MatchRepository {
         if (json == null) {
           return null;
         }
-        final data = json['data'] as Map<String, dynamic>?;
-        final match = data?['match'] as Map<String, dynamic>? ?? data;
+        final dynamic jsonData = json['data'];
+        Map<String, dynamic>? match;
+        if (jsonData is Map) {
+          match = jsonData['match'] as Map<String, dynamic>? ?? Map<String, dynamic>.from(jsonData);
+        }
 
         if (match == null) {
           return null;
@@ -609,6 +666,16 @@ class MatchRepository {
           }
         }
 
+        final playerPointsMap = <String, double>{};
+        final pointsJson = match['playerPoints'];
+        if (pointsJson is Map) {
+          pointsJson.forEach((key, value) {
+            if (value is num) {
+              playerPointsMap[key] = value.toDouble();
+            }
+          });
+        }
+
         final matchData = MatchData(
           id: match['_id'] as String? ?? match['id'] as String?,
           title: title,
@@ -627,6 +694,7 @@ class MatchRepository {
           team1PlayerData: team1PlayerDataList,
           team2PlayerData: team2PlayerDataList,
           quizzes: quizzesList,
+          playerPoints: playerPointsMap,
         );
 
         debugPrint(

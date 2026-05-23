@@ -51,6 +51,7 @@ class AuthStore extends GetxController {
   final isAuthenticated = false.obs;
   final isLoading = false.obs;
   final user = Rxn<User>();
+  final token = RxnString();
   final errorMessage = ''.obs;
 
   static const String _tokenKey = 'auth_token';
@@ -76,6 +77,7 @@ class AuthStore extends GetxController {
       final userJson = prefs.getString(_userKey);
 
       if (token != null && userJson != null) {
+        this.token.value = token;
         _apiService.setAuthToken(token);
         try {
           final decoded = jsonDecode(userJson);
@@ -105,6 +107,7 @@ class AuthStore extends GetxController {
 
   Future<void> setAuth(String token, User userData) async {
     try {
+      this.token.value = token;
       _apiService.setAuthToken(token);
       user.value = userData;
       isAuthenticated.value = true;
@@ -140,6 +143,7 @@ class AuthStore extends GetxController {
 
   Future<void> setAuthToken(String token) async {
     try {
+      this.token.value = token;
       _apiService.setAuthToken(token);
       isAuthenticated.value = true;
 
@@ -152,6 +156,7 @@ class AuthStore extends GetxController {
 
   Future<void> clearAuth() async {
     try {
+      this.token.value = null;
       _apiService.setAuthToken(null);
       user.value = null;
       isAuthenticated.value = false;

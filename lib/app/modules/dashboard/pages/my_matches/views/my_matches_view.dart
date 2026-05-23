@@ -8,6 +8,8 @@ import 'package:ok11/app/utils/status_theme.dart';
 import 'package:ok11/app/widgets/common/match_card_widget.dart';
 import 'package:ok11/app/widgets/common/shimmer_widget.dart';
 import 'package:ok11/app/widgets/common/tab_bar_widget.dart';
+import 'package:ok11/app/widgets/common/joined_contest_card_widget.dart';
+import 'package:ok11/app/data/models/contest_model.dart';
 
 class MyMatchesView extends GetView<MyMatchesController> {
   const MyMatchesView({super.key});
@@ -107,33 +109,12 @@ class MyMatchesView extends GetView<MyMatchesController> {
                             padding: const EdgeInsets.all(16),
                             itemCount: controller.currentMatches.length,
                             itemBuilder: (context, index) {
-                              final match = controller.currentMatches[index];
+                              final item = controller.currentMatches[index];
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 16),
-                                child: MatchCardWidget(
-                                  match: match,
+                                child: JoinedContestCardWidget(
+                                  item: item,
                                   isLoading: controller.isLoading.value,
-                                  showScoreCard: true,
-                                  onTap: () {
-                                    if (match.status == MatchStatus.upcoming) {
-                                      Get.toNamed(
-                                        Routes.MATCH_DETAIL,
-                                        arguments: match,
-                                      );
-                                    } else if (match.status ==
-                                        MatchStatus.live) {
-                                      Get.toNamed(
-                                        Routes.MATCH_DETAIL,
-                                        arguments: match,
-                                      );
-                                    } else if (match.status ==
-                                        MatchStatus.completed) {
-                                      Get.toNamed(
-                                        Routes.MATCH_DETAIL,
-                                        arguments: match,
-                                      );
-                                    }
-                                  },
                                 ),
                               );
                             },

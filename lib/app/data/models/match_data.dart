@@ -4,17 +4,33 @@ import 'package:ok11/app/utils/status_theme.dart';
 class PlayerData {
   final String id;
   final String name;
+  final String? imageUrl;
+  final String? role;
 
-  PlayerData({required this.id, required this.name});
+  PlayerData({required this.id, required this.name, this.imageUrl, this.role});
 
   factory PlayerData.fromJson(dynamic json) {
     if (json is String) {
       return PlayerData(id: json, name: json);
     } else if (json is Map) {
       final id =
-          json['_id'] as String? ?? json['id'] as String? ?? json.toString();
+          json['_id'] as String? ?? json['id'] as String? ?? '';
       final name = json['name'] as String? ?? id;
-      return PlayerData(id: id, name: name);
+      final role = json['role'] as String?;
+      String? imageUrl = json['imageUrl'] as String? ?? 
+                       json['image'] as String? ?? 
+                       json['photoUrl'] as String? ?? 
+                       json['photo'] as String?;
+                       
+      // If it's a relative path, prepend the base URL (from ApiConfig)
+      if (imageUrl != null && imageUrl.startsWith('/')) {
+        // We can't easily access ApiConfig here without importing it, 
+        // but we can at least make it look like a valid URL if it's relative.
+        // Actually, most images will be full URLs (CDN), but for local uploads:
+        // imageUrl = 'http://10.0.2.2:5925$imageUrl'; 
+        // For now, let's just make sure we don't break absolute URLs.
+      }
+      return PlayerData(id: id, name: name, imageUrl: imageUrl, role: role);
     }
     return PlayerData(id: json.toString(), name: json.toString());
   }
@@ -31,6 +47,7 @@ class MatchData {
   final String date;
   final String time;
   final int score;
+  final int? rank;
   final MatchStatus status;
   final int? participantsCount;
   final List<String> team1Players;
@@ -38,6 +55,7 @@ class MatchData {
   final List<PlayerData> team1PlayerData;
   final List<PlayerData> team2PlayerData;
   final List<QuizQuestion> quizzes;
+  final Map<String, double> playerPoints;
 
   MatchData({
     this.id,
@@ -50,6 +68,7 @@ class MatchData {
     required this.date,
     required this.time,
     required this.score,
+    this.rank,
     required this.status,
     this.participantsCount,
     this.team1Players = const [],
@@ -57,6 +76,7 @@ class MatchData {
     this.team1PlayerData = const [],
     this.team2PlayerData = const [],
     this.quizzes = const [],
+    this.playerPoints = const {},
   });
 
   Map<String, dynamic> toJson() => {
@@ -70,6 +90,7 @@ class MatchData {
     'date': date,
     'time': time,
     'score': score,
+    'rank': rank,
     'status': status.name,
     'participantsCount': participantsCount,
     'team1Players': team1Players,
@@ -154,6 +175,16 @@ class MatchData {
       }
     }
 
+    final playerPointsMap = <String, double>{};
+    final pointsJson = json['playerPoints'];
+    if (pointsJson is Map) {
+      pointsJson.forEach((key, value) {
+        if (value is num) {
+          playerPointsMap[key] = value.toDouble();
+        }
+      });
+    }
+
     return MatchData(
       id: json['id'] as String? ?? json['_id'] as String?,
       title: (json['title'] as String?) ?? '',
@@ -165,6 +196,7 @@ class MatchData {
       date: (json['date'] as String?) ?? 'TBD',
       time: (json['time'] as String?) ?? 'TBD',
       score: (json['score'] as int?) ?? 0,
+      rank: json['rank'] as int?,
       status: status,
       participantsCount: json['participantsCount'] as int?,
       team1Players: team1PlayersList,
@@ -172,6 +204,7 @@ class MatchData {
       team1PlayerData: team1PlayerDataList,
       team2PlayerData: team2PlayerDataList,
       quizzes: quizzesList,
+      playerPoints: playerPointsMap,
     );
   }
 }

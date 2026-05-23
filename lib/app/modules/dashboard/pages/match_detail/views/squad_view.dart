@@ -30,33 +30,15 @@ class SquadView extends GetView<MatchDetailController> {
   Widget _buildSquadContent(MatchData match) {
     return Column(
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: AppColors.primary.withValues(alpha: 0.05),
-          child: Row(
-            children: [
-              Icon(Icons.info_outline, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Select 11 players from both team',
-                  style: AppTextStyles.body2.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        // Dream11-style progress header
+        _buildProgressHeader(),
         Expanded(
           child: Row(
             children: [
               Expanded(
                 child: _buildTeamColumn(
                   match.team1,
-                  match.team1Players,
+                  match.team1PlayerData,
                   match.team1ImageUrl,
                   'team1',
                 ),
@@ -65,7 +47,7 @@ class SquadView extends GetView<MatchDetailController> {
               Expanded(
                 child: _buildTeamColumn(
                   match.team2,
-                  match.team2Players,
+                  match.team2PlayerData,
                   match.team2ImageUrl,
                   'team2',
                 ),
@@ -74,11 +56,9 @@ class SquadView extends GetView<MatchDetailController> {
           ),
         ),
         Obx(() {
-          final canSave =
-              controller.selectedTeam1Players.isNotEmpty &&
-              controller.selectedTeam2Players.isNotEmpty;
+          final canSave = controller.isSquadComplete;
           debugPrint(
-            '💾 SquadView: Can save=$canSave (t1=${controller.selectedTeam1Players.length}, t2=${controller.selectedTeam2Players.length})',
+            '💾 SquadView: Can save=$canSave (total=${controller.totalSelectedPlayers}/${MatchDetailController.maxTotalPlayers})',
           );
           return SaveProceedButton(
             onTap: canSave
@@ -93,12 +73,110 @@ class SquadView extends GetView<MatchDetailController> {
     );
   }
 
+  /// Dream11-style progress indicator at the top
+  Widget _buildProgressHeader() {
+    return Obx(() {
+      final total = controller.totalSelectedPlayers;
+      final max = MatchDetailController.maxTotalPlayers;
+      final progress = total / max;
+      final isComplete = controller.isSquadComplete;
+
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isComplete
+                ? [
+                    const Color(0xFF43A047),
+                    const Color(0xFF66BB6A),
+                  ]
+                : [
+                    AppColors.primary,
+                    AppColors.primary.withValues(alpha: 0.8),
+                  ],
+          ),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isComplete ? Icons.check_circle : Icons.people_alt_outlined,
+                  size: 20,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  isComplete
+                      ? 'Squad Complete! ✓'
+                      : 'Pick $max players from both teams',
+                  style: AppTextStyles.body2.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Progress bar
+            Container(
+              height: 6,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+                color: Colors.white.withValues(alpha: 0.3),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: LinearProgressIndicator(
+                  value: progress.clamp(0.0, 1.0),
+                  backgroundColor: Colors.transparent,
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Colors.white,
+                  ),
+                  minHeight: 6,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$total / $max players selected',
+              style: AppTextStyles.body2.copyWith(
+                color: Colors.white.withValues(alpha: 0.9),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
   Widget _buildTeamColumn(
     String teamName,
-    List<String> players,
+    List<PlayerData> playerDataList,
     String? teamImageUrl,
     String teamId,
   ) {
+    // Fall back to name list if playerData is empty
+    final players =
+        playerDataList.isNotEmpty
+            ? playerDataList
+            : controller.matchData.value
+                    ?.let((match) {
+                      final names =
+                          teamId == 'team1'
+                              ? match.team1Players
+                              : match.team2Players;
+                      return names
+                          .map((n) => PlayerData(id: n, name: n))
+                          .toList();
+                    }) ??
+                [];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.max,
@@ -191,7 +269,7 @@ class SquadView extends GetView<MatchDetailController> {
                           ? controller.selectedTeam1Players.length
                           : controller.selectedTeam2Players.length;
                       return Text(
-                        '$selectedCount/11 selected',
+                        '$selectedCount selected',
                         style: AppTextStyles.body2.copyWith(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -212,103 +290,100 @@ class SquadView extends GetView<MatchDetailController> {
                   padding: const EdgeInsets.all(16),
                   itemCount: players.length,
                   itemBuilder: (context, index) {
-                    final playerName = players[index];
+                    final playerData = players[index];
                     return Obx(() {
                       final isSelected = controller.isPlayerSelected(
-                        playerName,
+                        playerData.name,
                         teamId,
                       );
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary.withValues(alpha: 0.08)
-                              : AppColors.surface,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
+                      final isDisabled =
+                          !isSelected && controller.isSquadComplete;
+
+                      return AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: isDisabled ? 0.5 : 1.0,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.primary
-                                : Colors.transparent,
-                            width: isSelected ? 1.5 : 0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.04),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
+                                ? AppColors.primary.withValues(alpha: 0.08)
+                                : AppColors.surface,
                             borderRadius: BorderRadius.circular(10),
-                            onTap: () {
-                              debugPrint(
-                                '👤 SquadView: Toggling $playerName ($teamId)',
-                              );
-                              controller.togglePlayerSelection(
-                                playerName,
-                                teamId,
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : Colors.transparent,
+                              width: isSelected ? 1.5 : 0,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.04),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
                               ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? AppColors.primary
-                                          : AppColors.primary.withValues(
-                                              alpha: 0.1,
-                                            ),
-                                      shape: BoxShape.circle,
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(10),
+                              onTap: isDisabled
+                                  ? null
+                                  : () {
+                                      debugPrint(
+                                        '👤 SquadView: Toggling ${playerData.name} ($teamId)',
+                                      );
+                                      controller.togglePlayerSelection(
+                                        playerData.name,
+                                        teamId,
+                                      );
+                                    },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                child: Row(
+                                  children: [
+                                    // Player avatar with image
+                                    _buildPlayerAvatar(
+                                      playerData,
+                                      isSelected,
                                     ),
-                                    child: Center(
-                                      child: isSelected
-                                          ? Icon(
-                                              Icons.check,
-                                              color: Colors.white,
-                                              size: 20,
-                                            )
-                                          : Text(
-                                              playerName.isNotEmpty
-                                                  ? playerName[0].toUpperCase()
-                                                  : '?',
-                                              style: AppTextStyles.headline2
-                                                  .copyWith(
-                                                    fontSize: 18,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: isSelected
-                                                        ? Colors.white
-                                                        : AppColors.primary,
-                                                  ),
-                                            ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      playerName,
-                                      style: AppTextStyles.body1.copyWith(
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 15,
-                                        color: isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        playerData.name,
+                                        style: AppTextStyles.body1.copyWith(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 15,
+                                          color: isSelected
+                                              ? AppColors.primary
+                                              : AppColors.textPrimary,
+                                        ),
+                                        softWrap: true,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
                                       ),
-                                      softWrap: true,
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
                                     ),
-                                  ),
-                                ],
+                                    // Selection indicator
+                                    if (isSelected)
+                                      Container(
+                                        width: 24,
+                                        height: 24,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -321,4 +396,77 @@ class SquadView extends GetView<MatchDetailController> {
       ],
     );
   }
+
+  /// Build player avatar — shows image if available, otherwise initial letter
+  Widget _buildPlayerAvatar(PlayerData playerData, bool isSelected) {
+    final hasImage =
+        playerData.imageUrl != null && playerData.imageUrl!.isNotEmpty;
+
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: isSelected
+            ? AppColors.primary
+            : AppColors.primary.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isSelected
+              ? AppColors.primary
+              : AppColors.primary.withValues(alpha: 0.2),
+          width: 2,
+        ),
+      ),
+      child: ClipOval(
+        child: hasImage
+            ? CachedNetworkImage(
+                imageUrl: playerData.imageUrl!,
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Center(
+                  child: Text(
+                    playerData.name.isNotEmpty
+                        ? playerData.name[0].toUpperCase()
+                        : '?',
+                    style: AppTextStyles.headline2.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected ? Colors.white : AppColors.primary,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Center(
+                  child: Text(
+                    playerData.name.isNotEmpty
+                        ? playerData.name[0].toUpperCase()
+                        : '?',
+                    style: AppTextStyles.headline2.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected ? Colors.white : AppColors.primary,
+                    ),
+                  ),
+                ),
+              )
+            : Center(
+                child: Text(
+                  playerData.name.isNotEmpty
+                      ? playerData.name[0].toUpperCase()
+                      : '?',
+                  style: AppTextStyles.headline2.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? Colors.white : AppColors.primary,
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+/// Extension to allow null-safe let operations like Kotlin
+extension _LetExtension<T> on T {
+  R let<R>(R Function(T it) op) => op(this);
 }

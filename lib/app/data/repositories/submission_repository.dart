@@ -231,7 +231,7 @@ class SubmissionRepository {
       }
 
       final totalPointsEarned =
-          submissionJson['totalPointsEarned'] as int? ?? 0;
+          (submissionJson['totalPointsEarned'] as num?)?.toInt() ?? 0;
       final score = totalPointsEarned;
 
       final players = matchJson['players'] as Map<String, dynamic>?;

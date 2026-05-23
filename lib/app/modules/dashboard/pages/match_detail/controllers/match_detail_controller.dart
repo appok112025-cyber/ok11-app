@@ -12,9 +12,11 @@ import 'package:ok11/app/services/submission_service.dart';
 import 'package:ok11/app/stores/auth_store.dart';
 import 'package:ok11/app/utils/status_theme.dart';
 import 'package:ok11/app/widgets/common/app_snackbars.dart';
+import 'package:ok11/app/modules/contest/controllers/contest_controller.dart';
 
 class MatchDetailController extends GetxController {
-  static const int maxPlayerPerTeam = 11;
+  /// Dream11 style: exactly 11 players TOTAL across both teams
+  static const int maxTotalPlayers = 11;
 
   final _submissionRepository = SubmissionRepository();
   final _matchRepository = MatchRepository();
@@ -45,49 +47,64 @@ class MatchDetailController extends GetxController {
     return matchData.value?.quizzes ?? [];
   }
 
+  /// Total selected players across both teams
+  int get totalSelectedPlayers =>
+      selectedTeam1Players.length + selectedTeam2Players.length;
+
+  /// How many more players can be selected
+  int get remainingSlots => maxTotalPlayers - totalSelectedPlayers;
+
+  /// Whether the squad is complete (exactly 11 selected)
+  bool get isSquadComplete {
+    if (Get.isRegistered<ContestController>()) {
+      return Get.find<ContestController>().isTeamValid;
+    }
+    return totalSelectedPlayers == maxTotalPlayers;
+  }
+
   void togglePlayerSelection(String playerName, String team) {
     if (team == 'team1') {
       if (selectedTeam1Players.contains(playerName)) {
         selectedTeam1Players.remove(playerName);
         debugPrint(
-          '👤 Removed $playerName from team1 (${selectedTeam1Players.length} selected)',
+          '👤 Removed $playerName from team1 (total: $totalSelectedPlayers/$maxTotalPlayers)',
         );
       } else {
-        // Check max player limit
-        if (selectedTeam1Players.length >= maxPlayerPerTeam) {
+        // Check TOTAL combined limit (Dream11 style)
+        if (totalSelectedPlayers >= maxTotalPlayers) {
           debugPrint(
-            '⚠️ Cannot add $playerName to team1: Max limit ($maxPlayerPerTeam) reached',
+            '⚠️ Cannot add $playerName: Total limit ($maxTotalPlayers) reached',
           );
           AppSnackbars.showError(
-            'Maximum $maxPlayerPerTeam players allowed per team',
+            'You can only select $maxTotalPlayers players total',
           );
           return;
         }
         selectedTeam1Players.add(playerName);
         debugPrint(
-          '👤 Added $playerName to team1 (${selectedTeam1Players.length} selected)',
+          '👤 Added $playerName to team1 (total: $totalSelectedPlayers/$maxTotalPlayers)',
         );
       }
     } else {
       if (selectedTeam2Players.contains(playerName)) {
         selectedTeam2Players.remove(playerName);
         debugPrint(
-          '👤 Removed $playerName from team2 (${selectedTeam2Players.length} selected)',
+          '👤 Removed $playerName from team2 (total: $totalSelectedPlayers/$maxTotalPlayers)',
         );
       } else {
-        // Check max player limit
-        if (selectedTeam2Players.length >= maxPlayerPerTeam) {
+        // Check TOTAL combined limit (Dream11 style)
+        if (totalSelectedPlayers >= maxTotalPlayers) {
           debugPrint(
-            '⚠️ Cannot add $playerName to team2: Max limit ($maxPlayerPerTeam) reached',
+            '⚠️ Cannot add $playerName: Total limit ($maxTotalPlayers) reached',
           );
           AppSnackbars.showError(
-            'Maximum $maxPlayerPerTeam players allowed per team',
+            'You can only select $maxTotalPlayers players total',
           );
           return;
         }
         selectedTeam2Players.add(playerName);
         debugPrint(
-          '👤 Added $playerName to team2 (${selectedTeam2Players.length} selected)',
+          '👤 Added $playerName to team2 (total: $totalSelectedPlayers/$maxTotalPlayers)',
         );
       }
     }
@@ -113,6 +130,14 @@ class MatchDetailController extends GetxController {
     if (arguments is MatchData) {
       matchData.value = arguments;
       _buildPlayerLookupMaps(arguments);
+      
+      // Initialize ContestController early to avoid "setState during build" errors
+      if (!Get.isRegistered<ContestController>()) {
+        Get.put(ContestController()).setupForMatch(arguments);
+      } else {
+        Get.find<ContestController>().setupForMatch(arguments);
+      }
+
       debugPrint(
         '📋 Match: ${arguments.id} | ${arguments.title} | Players: ${arguments.team1Players.length}/${arguments.team2Players.length} | Quizzes: ${arguments.quizzes.length}',
       );
@@ -126,11 +151,25 @@ class MatchDetailController extends GetxController {
       // Check if submission exists immediately (O(1) lookup)
       if (arguments.id != null &&
           _submissionService.hasUserSubmitted(arguments.id)) {
-        debugPrint('✅ Submission exists, navigating directly to Score tab');
-        selectedTab.value = 2;
+        debugPrint('✅ Submission exists');
       }
 
-      Future.microtask(() => loadSubmission());
+      // Load contest data and prefill squad if the user already joined
+      if (arguments.id != null) {
+        // Trigger a background refresh to get latest player roles/images
+        _refreshMatchData();
+        
+        Future.microtask(() async {
+          final contestCtrl = Get.find<ContestController>();
+          await contestCtrl.fetchContests(arguments.id!);
+          
+          if (contestCtrl.joinedContestIds.isNotEmpty) {
+            debugPrint('🏆 Already joined contests found');
+          }
+          
+          loadSubmission(); // Keep this for quiz answers if still needed
+        });
+      }
     } else {
       debugPrint('⚠️ Invalid arguments: ${arguments.runtimeType}');
     }
@@ -176,6 +215,11 @@ class MatchDetailController extends GetxController {
         final oldStatus = matchData.value?.status;
         matchData.value = updatedMatch;
         _buildPlayerLookupMaps(updatedMatch);
+        
+        // Update ContestController with latest player data
+        if (Get.isRegistered<ContestController>()) {
+          Get.find<ContestController>().setupForMatch(updatedMatch);
+        }
 
         debugPrint(
           '✅ MatchDetailController: Match refreshed | status: $oldStatus → ${updatedMatch.status}',
@@ -185,12 +229,6 @@ class MatchDetailController extends GetxController {
         if (updatedMatch.status == MatchStatus.live ||
             updatedMatch.status == MatchStatus.completed) {
           await loadSubmission();
-
-          // Force to Score tab if match is now live/completed
-          if (selectedTab.value != 2) {
-            selectedTab.value = 2;
-            loadScoreData();
-          }
         }
       }
     } catch (e) {
@@ -233,14 +271,8 @@ class MatchDetailController extends GetxController {
         );
         submissionData.value = submission;
         hasSubmitted.value = true;
+        // Pre-fill submission data
         _loadSubmissionData(submission);
-
-        // Navigate directly to Score tab if not already there
-        if (selectedTab.value != 2) {
-          debugPrint('🔄 loadSubmission: Direct navigation to Score tab');
-          selectedTab.value = 2;
-          loadScoreData();
-        }
       } else {
         debugPrint('ℹ️ loadSubmission: No submission found');
       }
@@ -378,34 +410,30 @@ class MatchDetailController extends GetxController {
   }
 
   bool get canAccessQuiz {
-    return selectedTeam1Players.isNotEmpty && selectedTeam2Players.isNotEmpty;
+    // Dream11 style: must select exactly 11 total players
+    return isSquadComplete;
   }
 
   bool get canAccessScore {
-    return questions.isNotEmpty &&
-        selectedQuizAnswers.length >= questions.length;
+    if (questions.isEmpty) return true;
+    return selectedQuizAnswers.length >= questions.length;
   }
 
   void onTabChanged(int index) {
     debugPrint(
       '🔀 onTabChanged: $index (current: ${selectedTab.value}) | canAccessQuiz=$canAccessQuiz | canAccessScore=$canAccessScore',
     );
-    if (index == 1 && !canAccessQuiz) {
-      debugPrint('⚠️ onTabChanged: Blocked - Quiz access denied');
-      AppSnackbars.showError(
-        'Please select at least one player from each team to proceed',
-      );
-      return;
+    if (index == 1) {
+      // Allow unrestricted access to the Contest tab (Tab 1)
+      // Squad validation now happens when user clicks "Join Contest"
     }
-    if (index == 2 && !canAccessScore) {
-      debugPrint('⚠️ onTabChanged: Blocked - Score access denied');
-      AppSnackbars.showError('Please answer all quiz questions to proceed');
-      return;
+    if (index == 2) {
+      // Allow unrestricted access to the Leaderboard tab (Tab 2)
+      // Quiz is no longer required to view the leaderboard.
     }
 
     if (index > selectedTab.value) {
-      if (index == 1 && !canAccessQuiz) return;
-      if (index == 2 && !canAccessScore) return;
+      // No tab restrictions
     }
 
     selectedTab.value = index;
@@ -419,9 +447,17 @@ class MatchDetailController extends GetxController {
 
   Future<void> saveSquad() async {
     debugPrint(
-      '💾 saveSquad: Team1=${selectedTeam1Players.length} | Team2=${selectedTeam2Players.length}',
+      '💾 saveSquad: Team1=${selectedTeam1Players.length} | Team2=${selectedTeam2Players.length} | Total=$totalSelectedPlayers/$maxTotalPlayers',
     );
-    onTabChanged(1);
+
+    if (!isSquadComplete) {
+      AppSnackbars.showError(
+        'Please select exactly $maxTotalPlayers players ($totalSelectedPlayers/$maxTotalPlayers selected)',
+      );
+      return;
+    }
+
+    onTabChanged(0);
   }
 
   Future<void> saveQuiz() async {
@@ -437,10 +473,10 @@ class MatchDetailController extends GetxController {
         return;
       }
 
-      if (selectedTeam1Players.isEmpty && selectedTeam2Players.isEmpty) {
-        debugPrint('❌ saveQuiz: No players selected');
+      if (!isSquadComplete) {
+        debugPrint('❌ saveQuiz: Squad not complete ($totalSelectedPlayers/$maxTotalPlayers)');
         AppSnackbars.showError(
-          'Please select at least one player from each team',
+          'Please select exactly $maxTotalPlayers players',
         );
         return;
       }

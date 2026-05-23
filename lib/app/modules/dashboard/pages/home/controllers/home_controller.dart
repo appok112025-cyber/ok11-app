@@ -1,7 +1,8 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ok11/app/data/models/match_data.dart';
 import 'package:ok11/app/data/repositories/match_repository.dart';
+import 'package:ok11/app/data/repositories/contest_repository.dart';
 import 'package:ok11/app/modules/dashboard/pages/my_matches/controllers/my_matches_controller.dart';
 import 'package:ok11/app/routes/app_pages.dart';
 import 'package:ok11/app/services/firebase_service.dart';
@@ -13,6 +14,50 @@ class HomeController extends GetxController {
   final _firebaseService = Get.find<FirebaseService>();
   final _submissionService = Get.find<SubmissionService>();
   final isLoading = true.obs;
+
+  // Reactive Wallet Balance
+  final walletBalance = 0.0.obs;
+
+  // Withdraw from Wallet (Minimum 1000)
+  void withdraw(double amount) {
+    if (walletBalance.value < 1000) {
+      Get.snackbar(
+        'Withdrawal Failed',
+        'Minimum withdrawal amount is ₹1,000',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFE53935),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+    if (walletBalance.value < amount) {
+      Get.snackbar(
+        'Withdrawal Failed',
+        'Insufficient balance',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFE53935),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+    walletBalance.value -= amount;
+    Get.snackbar(
+      'Withdrawal Successful',
+      '₹${amount.toInt()} withdrawal initiated successfully.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const Color(0xFF43A047),
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+      duration: const Duration(seconds: 2),
+    );
+  }
 
   // Upcoming matches only
   final matches = <MatchData>[].obs;
@@ -29,7 +74,17 @@ class HomeController extends GetxController {
     // Set up notification refresh callback for real-time updates
     _firebaseService.onNotificationReceived = _handleNotificationRefresh;
 
-    Future.microtask(() => loadMatches());
+    // Load matches with 0ms visual load
+    Future.microtask(() async {
+      await _repository.initCache();
+      final cached = _repository.getInMemoryUpcomingMatches();
+      if (cached.isNotEmpty) {
+        matches.value = _sortMatches(cached);
+        isLoading.value = false; // Render instantly from cache
+        debugPrint('⚡ HomeController: Visual load completed in 0ms using cache');
+      }
+      await loadMatches();
+    });
   }
 
   @override
@@ -80,12 +135,30 @@ class HomeController extends GetxController {
 
   Future<void> loadMatches() async {
     debugPrint('📥 HomeController.loadMatches()');
-    isLoading.value = true;
+    if (matches.isEmpty) {
+      isLoading.value = true;
+    }
     try {
       final loadedMatches = await _repository.getUpcomingMatches();
-      matches.value = _sortMatches(loadedMatches);
+      
+      // Filter matches by active contest in parallel
+      final contestRepo = ContestRepository();
+      final filteredMatches = <MatchData>[];
+      
+      await Future.wait(loadedMatches.map((match) async {
+        if (match.id != null) {
+          final contests = await contestRepo.getContestsForMatch(match.id!);
+          final hasActiveContest = contests.any((c) => !c.isLocked);
+          if (hasActiveContest) {
+            filteredMatches.add(match);
+          }
+        }
+      }));
+
+      matches.value = _sortMatches(filteredMatches);
+      await _repository.cacheUpcomingMatches(filteredMatches);
       debugPrint(
-        '✅ HomeController.loadMatches: ${matches.length} upcoming matches',
+        '✅ HomeController.loadMatches: ${matches.length} upcoming matches with active contests (out of ${loadedMatches.length} raw matches)',
       );
 
       await _submissionService.refreshSubmissions();
@@ -96,7 +169,9 @@ class HomeController extends GetxController {
       );
     } catch (e) {
       debugPrint('❌ HomeController.loadMatches error: $e');
-      AppSnackbars.showError('Failed to load matches');
+      if (matches.isEmpty) {
+        AppSnackbars.showError('Failed to load matches');
+      }
       _firebaseService.logError(e, StackTrace.current);
     } finally {
       isLoading.value = false;
@@ -107,9 +182,25 @@ class HomeController extends GetxController {
     debugPrint('🔄 HomeController.refreshMatches()');
     try {
       final loadedMatches = await _repository.getUpcomingMatches();
-      matches.value = _sortMatches(loadedMatches);
+      
+      // Filter matches by active contest in parallel
+      final contestRepo = ContestRepository();
+      final filteredMatches = <MatchData>[];
+      
+      await Future.wait(loadedMatches.map((match) async {
+        if (match.id != null) {
+          final contests = await contestRepo.getContestsForMatch(match.id!);
+          final hasActiveContest = contests.any((c) => !c.isLocked);
+          if (hasActiveContest) {
+            filteredMatches.add(match);
+          }
+        }
+      }));
+
+      matches.value = _sortMatches(filteredMatches);
+      await _repository.cacheUpcomingMatches(filteredMatches);
       debugPrint(
-        '✅ HomeController.refreshMatches: ${matches.length} upcoming matches',
+        '✅ HomeController.refreshMatches: ${matches.length} upcoming matches with active contests (out of ${loadedMatches.length} raw matches)',
       );
 
       await _submissionService.refreshSubmissions();

@@ -116,9 +116,9 @@ class SubmissionData {
     final scoreSummary = scoreSummaryJson != null
         ? ScoreSummary(
             totalPointsAvailable:
-                scoreSummaryJson['totalPointsAvailable'] as int?,
-            totalPointsEarned: scoreSummaryJson['totalPointsEarned'] as int?,
-            percentage: scoreSummaryJson['percentage'] as int?,
+                (scoreSummaryJson['totalPointsAvailable'] as num?)?.toInt(),
+            totalPointsEarned: (scoreSummaryJson['totalPointsEarned'] as num?)?.toInt(),
+            percentage: (scoreSummaryJson['percentage'] as num?)?.toInt(),
           )
         : null;
 
@@ -142,8 +142,8 @@ class SubmissionData {
           ? null
           : teamBSelectedPlayerObjects,
       quizAnswers: quizAnswersList.isEmpty ? null : quizAnswersList,
-      totalPoints: json['totalPoints'] as int?,
-      totalPointsEarned: json['totalPointsEarned'] as int?,
+      totalPoints: (json['totalPoints'] as num?)?.toInt(),
+      totalPointsEarned: (json['totalPointsEarned'] as num?)?.toInt(),
       status: json['status'] as String?,
       submittedAt: json['submittedAt'] != null
           ? DateTime.tryParse(json['submittedAt'] as String)?.toLocal()

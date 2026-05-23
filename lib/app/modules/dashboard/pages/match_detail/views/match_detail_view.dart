@@ -9,6 +9,10 @@ import 'package:ok11/app/services/submission_service.dart';
 import 'package:ok11/app/theme/app_colors.dart';
 import 'package:ok11/app/utils/status_theme.dart';
 import 'package:ok11/app/widgets/common/tab_bar_widget.dart';
+import 'package:ok11/app/modules/contest/views/contest_list_view.dart';
+import 'package:ok11/app/modules/contest/views/team_creation_view.dart';
+import 'package:ok11/app/modules/contest/views/leaderboard_view.dart';
+import 'package:ok11/app/modules/contest/controllers/contest_controller.dart';
 
 class MatchDetailView extends GetView<MatchDetailController> {
   final String? teams;
@@ -37,6 +41,14 @@ class MatchDetailView extends GetView<MatchDetailController> {
         ),
         title: Text(matchData?.title ?? teams ?? 'Match'),
         centerTitle: false,
+        /* Appbar contests button disabled as requested
+        actions: [
+          if (matchData != null)
+            Padding(
+              ...
+              ),
+            ),
+        ], */
       ),
       body: Column(
         children: [
@@ -52,26 +64,17 @@ class MatchDetailView extends GetView<MatchDetailController> {
 
             return TabBarWidget(
               selectedTab: controller.selectedTab,
-              tabs: const ['Squad', 'Quiz', 'Score'],
+              tabs: const ['Contest', 'Team'],
               icons: const [
-                Icons.people_outline_rounded,
-                Icons.quiz_outlined,
                 Icons.emoji_events_outlined,
+                Icons.people_outline_rounded,
               ],
               enabledTabs: [
-                !shouldDisableSquadAndQuiz, // Squad disabled when submitted or live/completed
-                !shouldDisableSquadAndQuiz &&
-                    controller
-                        .canAccessQuiz, // Quiz disabled when submitted or live/completed
-                true, // Score always enabled
+                true, // Contest always enabled
+                true, // Team always enabled
               ],
               onTabChanged: (index) {
-                if (shouldDisableSquadAndQuiz && index != 2) {
-                  // Force to Score tab if trying to access disabled tabs
-                  controller.selectedTab.value = 2;
-                } else {
-                  controller.onTabChanged(index);
-                }
+                controller.onTabChanged(index);
               },
             );
           }),
@@ -83,15 +86,19 @@ class MatchDetailView extends GetView<MatchDetailController> {
 
   Widget _buildPage(int index) {
     debugPrint('🔄 MatchDetailView._buildPage: $index');
+    final match = controller.matchData.value;
+    
+    if (match == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
     switch (index) {
       case 0:
-        return SquadView();
+        return ContestListViewFragment(matchData: match);
       case 1:
-        return QuizView();
-      case 2:
-        return const ScoreView();
+        return TeamCreationView(matchData: match);
       default:
-        return SquadView();
+        return ContestListViewFragment(matchData: match);
     }
   }
 

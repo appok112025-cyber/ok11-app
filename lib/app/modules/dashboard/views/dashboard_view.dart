@@ -4,6 +4,7 @@ import 'package:ok11/app/modules/dashboard/controllers/dashboard_controller.dart
 import 'package:ok11/app/modules/dashboard/pages/home/views/home_view.dart';
 import 'package:ok11/app/modules/dashboard/pages/profile/views/profile_view.dart';
 import 'package:ok11/app/modules/dashboard/pages/my_matches/views/my_matches_view.dart';
+import 'package:ok11/app/modules/dashboard/pages/ar/views/ar_view.dart';
 import 'package:ok11/app/theme/app_colors.dart';
 
 class DashboardView extends GetView<DashboardController> {
@@ -66,6 +67,11 @@ class DashboardView extends GetView<DashboardController> {
                   label: 'My Matches',
                 ),
                 BottomNavigationBarItem(
+                  icon: Icon(Icons.view_in_ar_outlined),
+                  activeIcon: Icon(Icons.view_in_ar_rounded),
+                  label: 'AR',
+                ),
+                BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline),
                   activeIcon: Icon(Icons.person_rounded),
                   label: 'Profile',
@@ -85,6 +91,8 @@ class DashboardView extends GetView<DashboardController> {
       case 1:
         return const MyMatchesView();
       case 2:
+        return const ArView();
+      case 3:
         return const ProfileView();
       default:
         return const HomeView();

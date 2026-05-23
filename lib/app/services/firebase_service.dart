@@ -27,11 +27,20 @@ class FirebaseService extends GetxService {
   NotificationRefreshCallback? onNotificationReceived;
 
   Future<FirebaseService> init() async {
+    debugPrint('🔥 FirebaseService.init(): Starting');
     await _initAnalytics();
+    debugPrint('🔥 FirebaseService: Analytics done');
     await _initCrashlytics();
+    debugPrint('🔥 FirebaseService: Crashlytics done');
     await _initMessaging();
+    debugPrint('🔥 FirebaseService: Messaging done');
     // Subscribe to general topic for admin notifications
-    await subscribeToTopic('general');
+    debugPrint('🔥 FirebaseService: Subscribing to general topic');
+    await subscribeToTopic('general').timeout(
+      const Duration(seconds: 5),
+      onTimeout: () => debugPrint('🔥 FirebaseService: Topic subscription timed out'),
+    );
+    debugPrint('🔥 FirebaseService: init() finished');
     return this;
   }
 
@@ -201,6 +210,7 @@ class FirebaseService extends GetxService {
     if (kDebugMode && token != null) {
       debugPrint('FCM Token: $token');
     }
+    debugPrint('🔥 FirebaseService: _setupFirebaseMessaging finished');
 
     messaging.onTokenRefresh.listen((newToken) async {
       if (kDebugMode) {
@@ -247,6 +257,11 @@ class FirebaseService extends GetxService {
       case 'match_cancelled':
         if (kDebugMode) {
           debugPrint('🏏 Match status change: $type');
+        }
+        break;
+      case 'match_reminder':
+        if (kDebugMode) {
+          debugPrint('⏰ Match reminder notification received');
         }
         break;
       default:

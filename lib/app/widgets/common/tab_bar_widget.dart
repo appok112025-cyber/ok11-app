@@ -131,24 +131,31 @@ class TabBarWidget extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-                  AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    style: AppTextStyles.body2.copyWith(
-                      color: isSelected
-                          ? Colors.white
-                          : isEnabled
-                          ? AppColors.textSecondary
-                          : AppColors.textSecondary.withValues(alpha: 0.4),
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      fontSize: 13,
-                      letterSpacing: 0.5,
-                    ),
-                    child: Text(
-                      label.toUpperCase(),
-                      textAlign: TextAlign.center,
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                        style: AppTextStyles.body2.copyWith(
+                          color: isSelected
+                              ? Colors.white
+                              : isEnabled
+                              ? AppColors.textSecondary
+                              : AppColors.textSecondary.withValues(alpha: 0.4),
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          fontSize: 12, // Reduced slightly from 13
+                          letterSpacing: 0.5,
+                        ),
+                        child: Text(
+                          label.toUpperCase(),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
                   ),
                 ],

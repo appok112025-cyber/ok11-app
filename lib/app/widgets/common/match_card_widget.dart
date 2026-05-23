@@ -284,23 +284,55 @@ class MatchCardWidget extends StatelessWidget {
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Your Score',
-                              style: AppTextStyles.body2.copyWith(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Your Score',
+                                  style: AppTextStyles.body2.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${match.score} points',
+                                  style: AppTextStyles.headline2.copyWith(
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${match.score} points',
-                              style: AppTextStyles.headline2.copyWith(
-                                color: AppColors.primary,
+                            if (match.rank != null && match.rank! > 0) ...[
+                              Container(
+                                height: 32,
+                                width: 1.5,
+                                color: AppColors.primary.withValues(alpha: 0.15),
                               ),
-                            ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'Your Rank',
+                                    style: AppTextStyles.body2.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '#${match.rank}',
+                                    style: AppTextStyles.headline2.copyWith(
+                                      color: AppColors.accentOrange,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),

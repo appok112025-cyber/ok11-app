@@ -27,9 +27,11 @@ void main() async {
         overlays: [SystemUiOverlay.top],
       );
 
+      debugPrint('🏁 main: Initializing Firebase');
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+      debugPrint('🏁 main: Firebase initialized');
 
       if (kReleaseMode) {
         FlutterError.onError = (FlutterErrorDetails details) {
@@ -59,19 +61,25 @@ void main() async {
         permanent: true,
       );
 
+      debugPrint('🏁 main: Initializations complete');
       await Get.putAsync<FirebaseService>(
         () async => FirebaseService().init(),
         permanent: true,
       );
 
+      debugPrint('🏁 main: Put FirebaseService finished');
       Get.put<ApiService>(ApiService(), permanent: true);
+      debugPrint('🏁 main: Put ApiService finished');
       Get.put<AuthStore>(AuthStore(), permanent: true);
+      debugPrint('🏁 main: Put AuthStore finished');
 
+      debugPrint('🏁 main: Initializing SubmissionService');
       await Get.putAsync<SubmissionService>(
         () async => SubmissionService().init(),
         permanent: true,
       );
 
+      debugPrint('🏁 main: Calling runApp');
       runApp(const MyApp());
     },
     (error, stack) {
