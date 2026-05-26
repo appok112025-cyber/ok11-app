@@ -15,6 +15,7 @@ class User {
   final String? phone;
   final String role;
   final bool blocked;
+  final double walletBalance;
 
   User({
     required this.id,
@@ -25,6 +26,7 @@ class User {
     this.phone,
     required this.role,
     required this.blocked,
+    required this.walletBalance,
   });
 
   factory User.fromJson(Map<String, dynamic>? json) {
@@ -40,6 +42,7 @@ class User {
       phone: json['phone'] as String?,
       role: (json['role'] as String?) ?? 'user',
       blocked: json['blocked'] as bool? ?? false,
+      walletBalance: (json['walletBalance'] ?? 0.0).toDouble(),
     );
   }
 }
@@ -125,6 +128,7 @@ class AuthStore extends GetxController {
           'phone': userData.phone,
           'role': userData.role,
           'blocked': userData.blocked,
+          'walletBalance': userData.walletBalance,
         }),
       );
 
@@ -319,6 +323,7 @@ class AuthStore extends GetxController {
             'phone': userData.phone,
             'role': userData.role,
             'blocked': userData.blocked,
+            'walletBalance': userData.walletBalance,
           }),
         );
       } else {

@@ -152,7 +152,21 @@ Widget _divider() {
   return Container(height: 40, width: 1, color: Colors.grey.shade200);
 }
 
-Widget _buildLeaderboardTile(BuildContext context, LeaderboardEntryModel entry, bool isMe) {
+double getPrizeForRank(int rank, ContestModel? contest) {
+  if (contest == null || contest.prizeBreakdown == null || contest.prizeBreakdown!.isEmpty) {
+    return rank == 1 ? contest?.firstPrize ?? 0.0 : 0.0;
+  }
+  for (final range in contest.prizeBreakdown!) {
+    if (rank >= range.fromRank && rank <= range.toRank) {
+      return range.prizeAmount;
+    }
+  }
+  return 0.0;
+}
+
+Widget _buildLeaderboardTile(BuildContext context, LeaderboardEntryModel entry, bool isMe, ContestModel? contest) {
+  final prizeAmount = getPrizeForRank(entry.rank, contest);
+
   return Container(
     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
     decoration: BoxDecoration(
@@ -192,20 +206,44 @@ Widget _buildLeaderboardTile(BuildContext context, LeaderboardEntryModel entry, 
           fontWeight: isMe ? FontWeight.w900 : FontWeight.bold,
         ),
       ),
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          '${entry.points.toStringAsFixed(1)} PTS',
-          style: const TextStyle(
-            color: Color(0xFF0F1923),
-            fontWeight: FontWeight.w900,
-            fontSize: 14,
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '${entry.points.toStringAsFixed(1)} PTS',
+              style: const TextStyle(
+                color: Color(0xFF0F1923),
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+              ),
+            ),
           ),
-        ),
+          if (prizeAmount > 0) ...[
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '₹${prizeAmount.toInt()}',
+                style: TextStyle(
+                  color: Colors.green.shade700,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     ),
   );
@@ -260,7 +298,8 @@ class LeaderboardViewFragment extends StatelessWidget {
                     (context, index) {
                       final entry = controller.leaderboard[index];
                       final isMe = entry.userId == currentUserId;
-                      return _buildLeaderboardTile(context, entry, isMe);
+                      final contest = controller.contests.firstWhereOrNull((c) => c.id == controller.joinedContestIds.first);
+                      return _buildLeaderboardTile(context, entry, isMe, contest);
                     },
                     childCount: controller.leaderboard.length,
                   ),
@@ -358,7 +397,7 @@ class _LeaderboardViewState extends State<LeaderboardView> {
                         (context, index) {
                           final entry = controller.leaderboard[index];
                           final isMe = entry.userId == currentUserId;
-                          return _buildLeaderboardTile(context, entry, isMe);
+                          return _buildLeaderboardTile(context, entry, isMe, widget.contest);
                         },
                         childCount: controller.leaderboard.length,
                       ),

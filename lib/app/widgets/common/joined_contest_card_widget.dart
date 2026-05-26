@@ -218,41 +218,77 @@ class JoinedContestCardWidget extends StatelessWidget {
                       // 4. Live / Completed stats (rank & points)
                       if (!isUpcoming) ...[
                         const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.grey.shade100),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(Icons.emoji_events, size: 16, color: Color(0xFFD4AF37)),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Rank: #${item.rank}',
-                                    style: const TextStyle(
-                                      color: Color(0xFF0F1923),
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 13,
+                        () {
+                          final double prizeAmount = contest != null
+                              ? (contest.prizeBreakdown == null || contest.prizeBreakdown!.isEmpty)
+                                  ? (item.rank == 1 ? contest.firstPrize : 0.0)
+                                  : contest.prizeBreakdown!
+                                      .firstWhere(
+                                        (r) => (item.rank ?? 0) >= r.fromRank && (item.rank ?? 0) <= r.toRank,
+                                        orElse: () => PrizeRange(fromRank: 0, toRank: 0, prizeAmount: 0.0),
+                                      )
+                                      .prizeAmount
+                              : 0.0;
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.shade100),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.emoji_events, size: 16, color: Color(0xFFD4AF37)),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Rank: #${item.rank}',
+                                      style: const TextStyle(
+                                        color: Color(0xFF0F1923),
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                '${item.points?.toStringAsFixed(1) ?? '0.0'} Pts',
-                                style: const TextStyle(
-                                  color: Color(0xFF0F1923),
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 13,
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (prizeAmount > 0) ...[
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.shade50,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          'Won ₹${prizeAmount.toInt()}',
+                                          style: TextStyle(
+                                            color: Colors.green.shade700,
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                    Text(
+                                      '${item.points?.toStringAsFixed(1) ?? '0.0'} Pts',
+                                      style: const TextStyle(
+                                        color: Color(0xFF0F1923),
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }(),
                       ],
                     ],
                   ),

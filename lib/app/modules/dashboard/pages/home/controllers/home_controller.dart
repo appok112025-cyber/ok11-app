@@ -8,6 +8,7 @@ import 'package:ok11/app/routes/app_pages.dart';
 import 'package:ok11/app/services/firebase_service.dart';
 import 'package:ok11/app/services/submission_service.dart';
 import 'package:ok11/app/widgets/common/app_snackbars.dart';
+import 'package:ok11/app/stores/auth_store.dart';
 
 class HomeController extends GetxController {
   final _repository = MatchRepository();
@@ -73,6 +74,17 @@ class HomeController extends GetxController {
 
     // Set up notification refresh callback for real-time updates
     _firebaseService.onNotificationReceived = _handleNotificationRefresh;
+
+    // Bind walletBalance to AuthStore user's balance
+    if (Get.isRegistered<AuthStore>()) {
+      final authStore = Get.find<AuthStore>();
+      walletBalance.value = authStore.user.value?.walletBalance ?? 0.0;
+      ever(authStore.user, (User? u) {
+        if (u != null) {
+          walletBalance.value = u.walletBalance;
+        }
+      });
+    }
 
     // Load matches with 0ms visual load
     Future.microtask(() async {
@@ -181,6 +193,14 @@ class HomeController extends GetxController {
   Future<void> refreshMatches() async {
     debugPrint('🔄 HomeController.refreshMatches()');
     try {
+      // Refresh current user profile to update walletBalance
+      if (Get.isRegistered<AuthStore>()) {
+        final authStore = Get.find<AuthStore>();
+        await authStore.getCurrentUser().catchError((e) {
+          debugPrint('⚠️ Error refreshing user profile: $e');
+        });
+      }
+
       final loadedMatches = await _repository.getUpcomingMatches();
       
       // Filter matches by active contest in parallel

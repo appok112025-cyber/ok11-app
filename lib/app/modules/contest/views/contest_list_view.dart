@@ -124,21 +124,36 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                       GestureDetector(
                         onTap: isLocked ? null : () => _showPrizePoolBreakdown(context, contest),
                         child: Container(
-                          color: Colors.transparent, // Expand tap target
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Colors.green.shade100,
+                              width: 1,
+                            ),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
                                   Text('PRIZE POOL', 
-                                    style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                                    style: TextStyle(color: Colors.green.shade900, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                                   const SizedBox(width: 4),
-                                  Icon(Icons.info_outline, size: 12, color: Colors.grey.shade400),
+                                  Icon(Icons.info_outline, size: 12, color: Colors.green.shade700),
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              Text('₹${contest.firstPrize.toInt()}', 
-                                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.green.shade700)),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('₹${contest.firstPrize.toInt()}', 
+                                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.green.shade700)),
+                                  const SizedBox(width: 4),
+                                  Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Colors.green.shade600),
+                                ],
+                              ),
                             ],
                           ),
                         ),
