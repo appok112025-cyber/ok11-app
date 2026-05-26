@@ -101,6 +101,7 @@ class ContestController extends GetxController {
       rxViceCaptainId.value = '';
       isEditing.value = false;
       joinedContestIds.clear();
+      leaderboard.clear();
     }
   }
 
@@ -142,6 +143,7 @@ class ContestController extends GetxController {
 
   void fetchLeaderboard(String contestId) async {
     isLoading.value = true;
+    leaderboard.clear();
     try {
       final data = await repo.getLeaderboard(contestId);
       leaderboard.value = data;

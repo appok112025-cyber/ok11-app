@@ -97,7 +97,14 @@ class ContestRepository {
   Future<List<LeaderboardEntryModel>> getLeaderboard(String contestId) async {
     try {
       final url = Uri.parse('$_adminApiUrl/contests/$contestId/leaderboard');
-      final response = await http.get(url, headers: _headers);
+      
+      // Prevent client-side caching of the leaderboard
+      final Map<String, String> requestHeaders = Map<String, String>.from(_headers);
+      requestHeaders['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+      requestHeaders['Pragma'] = 'no-cache';
+      requestHeaders['Expires'] = '0';
+
+      final response = await http.get(url, headers: requestHeaders);
       
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
