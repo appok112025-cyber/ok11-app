@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:ok11/app/data/models/match_data.dart';
 import 'package:ok11/app/data/models/contest_model.dart';
 import 'package:ok11/app/modules/contest/controllers/contest_controller.dart';
@@ -7,17 +8,23 @@ import 'package:ok11/app/modules/contest/views/captain_selection_view.dart';
 import 'package:ok11/app/theme/app_colors.dart';
 import 'package:ok11/app/utils/player_utils.dart';
 import 'package:ok11/app/utils/status_theme.dart';
+import 'package:ok11/app/modules/dashboard/pages/match_detail/controllers/match_detail_controller.dart';
 
 class TeamCreationView extends StatelessWidget {
   final MatchData matchData;
   final ContestModel? contest;
 
-  const TeamCreationView(
-      {Key? key, required this.matchData, this.contest})
-      : super(key: key);
+  const TeamCreationView({Key? key, required this.matchData, this.contest})
+    : super(key: key);
 
   static const _roleLabels = ['ALL', 'WK', 'BAT', 'AR', 'BOWL'];
-  static const _roleValues = [null, PlayerRole.wk, PlayerRole.bat, PlayerRole.ar, PlayerRole.bowl];
+  static const _roleValues = [
+    null,
+    PlayerRole.wk,
+    PlayerRole.bat,
+    PlayerRole.ar,
+    PlayerRole.bowl,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +32,9 @@ class TeamCreationView extends StatelessWidget {
 
     return Obx(() {
       // If the squad and captain are already picked, show the preview!
-      if (controller.isTeamValid && controller.rxCaptainId.isNotEmpty && !controller.isEditing.value) {
+      if (controller.isTeamValid &&
+          controller.rxCaptainId.isNotEmpty &&
+          !controller.isEditing.value) {
         return _buildSquadPreview(context, controller);
       }
 
@@ -36,7 +45,6 @@ class TeamCreationView extends StatelessWidget {
 
       return Column(
         children: [
-          _buildHeader(context, controller),
           _buildStatsBar(controller),
           _buildRoleTabBar(controller),
           _buildPlayerList(controller),
@@ -46,14 +54,20 @@ class TeamCreationView extends StatelessWidget {
     });
   }
 
-  Widget _buildSquadPreview(BuildContext context, ContestController controller) {
+  Widget _buildSquadPreview(
+    BuildContext context,
+    ContestController controller,
+  ) {
     final cap = controller.rxCaptainId.value;
     final vc = controller.rxViceCaptainId.value;
-    
+
     // Map selected player IDs to PlayerInfo objects
-    final players = controller.selectedPlayers.map((id) {
-      return controller.allPlayerInfo.firstWhereOrNull((p) => p.id == id);
-    }).whereType<PlayerInfo>().toList();
+    final players = controller.selectedPlayers
+        .map((id) {
+          return controller.allPlayerInfo.firstWhereOrNull((p) => p.id == id);
+        })
+        .whereType<PlayerInfo>()
+        .toList();
 
     // Group players by role
     final wks = players.where((p) => p.role == PlayerRole.wk).toList();
@@ -61,143 +75,248 @@ class TeamCreationView extends StatelessWidget {
     final ars = players.where((p) => p.role == PlayerRole.ar).toList();
     final bowls = players.where((p) => p.role == PlayerRole.bowl).toList();
 
-    return Container(
-      color: const Color(0xFF143F23), // Premium dark green stadium color
+    return Expanded(
       child: Column(
         children: [
-          // Header with edit button
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: const Color(0xFF0F301B), // Immersive dark green header
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'My Squad Preview', 
-                  style: TextStyle(
-                    color: Colors.white, 
-                    fontSize: 18, 
-                    fontWeight: FontWeight.bold,
-                  ),
+          // Green Cricket Field Card
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E7D32),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/ground.png'),
+                  fit: BoxFit.cover,
                 ),
-                if (matchData.status == MatchStatus.upcoming)
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-                    label: const Text('Edit Squad', style: TextStyle(color: Colors.white)),
-                    onPressed: () {
-                      controller.isEditing.value = true;
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white30),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                    ),
-                  ),
-              ],
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  if (wks.isNotEmpty) ...[
+                    _buildRoleHeading('WICKET KEEPER'),
+                    _buildPlayerRow(context, wks, cap, vc),
+                  ],
+                  if (bats.isNotEmpty) ...[
+                    _buildRoleHeading('BATTERS'),
+                    _buildPlayerRow(context, bats, cap, vc),
+                  ],
+                  if (ars.isNotEmpty) ...[
+                    _buildRoleHeading('ALL ROUNDERS'),
+                    _buildPlayerRow(context, ars, cap, vc),
+                  ],
+                  if (bowls.isNotEmpty) ...[
+                    _buildRoleHeading('BOWLERS'),
+                    _buildPlayerRow(context, bowls, cap, vc),
+                  ],
+                ],
+              ),
             ),
           ),
-          
-          // Immersive Grass Pitch Preview
-          Expanded(
-            child: Stack(
-              children: [
-                // 1. Cricket Field Ground Grass Background (Perfect Square in the Center)
-                Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: AspectRatio(
-                      aspectRatio: 1.0,
-                      child: Image.asset(
-                        'assets/images/ground.png',
-                        fit: BoxFit.fill,
+          // Bottom Edit and Confirm buttons
+          Builder(
+            builder: (context) {
+              final bottomPadding = MediaQuery.of(context).padding.bottom;
+              final isUpcoming = matchData.status == MatchStatus.upcoming;
+
+              return Container(
+                color: Colors.white,
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  14,
+                  16,
+                  bottomPadding > 0 ? bottomPadding + 8 : 16,
+                ),
+                child: Row(
+                  children: [
+                    if (isUpcoming) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(
+                            Icons.edit,
+                            size: 16,
+                            color: AppColors.primary,
+                          ),
+                          label: const Text(
+                            'Edit Team',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          onPressed: () {
+                            controller.isEditing.value = true;
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1.5,
+                            ),
+                            minimumSize: const Size(double.infinity, 52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'TOTAL POINTS:',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Builder(
+                                builder: (ctx) {
+                                  final totalPoints = players.fold<double>(
+                                    0.0,
+                                    (sum, p) {
+                                      final basePoints =
+                                          matchData.playerPoints[p.id] ?? 0.0;
+                                      if (p.id == cap)
+                                        return sum + basePoints * 2.0;
+                                      if (p.id == vc)
+                                        return sum + basePoints * 1.5;
+                                      return sum + basePoints;
+                                    },
+                                  );
+                                  return Text(
+                                    totalPoints.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ] else
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'TOTAL POINTS:',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Builder(
+                                builder: (ctx) {
+                                  final totalPoints = players.fold<double>(
+                                    0.0,
+                                    (sum, p) {
+                                      final basePoints =
+                                          matchData.playerPoints[p.id] ?? 0.0;
+                                      if (p.id == cap)
+                                        return sum + basePoints * 2.0;
+                                      if (p.id == vc)
+                                        return sum + basePoints * 1.5;
+                                      return sum + basePoints;
+                                    },
+                                  );
+                                  return Text(
+                                    totalPoints.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-
-                // Subdued field overlay to make player names pop
-                Container(
-                  color: Colors.black.withValues(alpha: 0.15),
-                ),
-
-                // 2. Player Rows in custom 2-3-3-3 Grid
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: _buildSquadGrid(context, controller, players),
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSquadGrid(BuildContext context, ContestController controller, List<PlayerInfo> players) {
-    final cap = controller.rxCaptainId.value;
-    final vc = controller.rxViceCaptainId.value;
-
-    final capInfo = players.firstWhereOrNull((p) => p.id == cap);
-    final vcInfo = players.firstWhereOrNull((p) => p.id == vc);
-
-    // Row 1: Captain & Vice-Captain
-    final List<PlayerInfo> row1 = [];
-    if (capInfo != null) row1.add(capInfo);
-    if (vcInfo != null) row1.add(vcInfo);
-
-    // Get all remaining players
-    final allRemaining = players.where((p) => p.id != cap && p.id != vc).toList();
-    
-    // Fallback: If row1 doesn't have 2 players, pull from list
-    while (row1.length < 2 && allRemaining.isNotEmpty) {
-      row1.add(allRemaining.removeAt(0));
-    }
-
-    // Rows 2, 3, 4: Divide remaining 9 players into 3 rows of 3 players each
-    final List<PlayerInfo> row2 = [];
-    final List<PlayerInfo> row3 = [];
-    final List<PlayerInfo> row4 = [];
-
-    for (int i = 0; i < allRemaining.length; i++) {
-      if (i < 3) {
-        row2.add(allRemaining[i]);
-      } else if (i < 6) {
-        row3.add(allRemaining[i]);
-      } else {
-        row4.add(allRemaining[i]);
-      }
-    }
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildRowWrapper(context, cap, vc, row1),
-        _buildRowWrapper(context, cap, vc, row2),
-        _buildRowWrapper(context, cap, vc, row3),
-        _buildRowWrapper(context, cap, vc, row4),
-      ],
+  Widget _buildRoleHeading(String title) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.5,
+        ),
+      ),
     );
   }
 
-  Widget _buildRowWrapper(BuildContext context, String? cap, String? vc, List<PlayerInfo> list) {
-    if (list.isEmpty) return const SizedBox();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: list.map((p) {
+  Widget _buildPlayerRow(
+    BuildContext context,
+    List<PlayerInfo> players,
+    String? cap,
+    String? vc,
+  ) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: players.map((p) {
         final isCap = cap == p.id;
         final isVc = vc == p.id;
         final pPoints = matchData.playerPoints[p.id] ?? 0.0;
         final isDt = matchData.status != MatchStatus.upcoming && pPoints >= 80;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: _buildPreviewPlayerItem(context, p, isCap, isVc, isDt, pPoints),
-        );
+        return _buildPreviewPlayerItem(context, p, isCap, isVc, isDt, pPoints);
       }).toList(),
     );
   }
 
-  Widget _buildPreviewPlayerItem(BuildContext context, PlayerInfo pInfo, bool isCap, bool isVc, bool isDt, double pPoints) {
+  Widget _buildPreviewPlayerItem(
+    BuildContext context,
+    PlayerInfo pInfo,
+    bool isCap,
+    bool isVc,
+    bool isDt,
+    double pPoints,
+  ) {
     final isTeam1 = pInfo.teamName == matchData.team1;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -211,7 +330,7 @@ class TeamCreationView extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: isTeam1 
+                color: isTeam1
                     ? const Color(0xFF1E3A8A)
                     : const Color(0xFFC2410C),
                 shape: BoxShape.circle,
@@ -230,16 +349,24 @@ class TeamCreationView extends StatelessWidget {
                         pInfo.imageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (c, e, s) => const Center(
-                          child: Icon(Icons.person, color: Colors.white70, size: 28),
+                          child: Icon(
+                            Icons.person,
+                            color: Colors.white70,
+                            size: 28,
+                          ),
                         ),
                       )
                     : const Center(
-                        child: Icon(Icons.person, color: Colors.white70, size: 28),
+                        child: Icon(
+                          Icons.person,
+                          color: Colors.white70,
+                          size: 28,
+                        ),
                       ),
               ),
             ),
 
-            // Captain / Vice Captain Indicator
+            // Captain / Vice Captain Indicator - Purple C, Gold VC
             if (isCap || isVc)
               Positioned(
                 top: -4,
@@ -249,7 +376,7 @@ class TeamCreationView extends StatelessWidget {
                   height: 22,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: isCap ? AppColors.primary : AppColors.accentGold,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 1.5),
                   ),
@@ -270,7 +397,10 @@ class TeamCreationView extends StatelessWidget {
                 bottom: -2,
                 right: -2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.amber.shade600,
                     borderRadius: BorderRadius.circular(4),
@@ -288,10 +418,10 @@ class TeamCreationView extends StatelessWidget {
               ),
           ],
         ),
-        
+
         const SizedBox(height: 6),
 
-        // Player Name Pill (white box with bold text)
+        // Player Name Pill
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
@@ -318,7 +448,7 @@ class TeamCreationView extends StatelessWidget {
 
         const SizedBox(height: 4),
 
-        // Live Points / Credit Cost Pill (Solid dark contrast container for 100% readability)
+        // Live Points / Credit Cost Pill
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
@@ -333,9 +463,7 @@ class TeamCreationView extends StatelessWidget {
             ],
           ),
           child: Text(
-            matchData.status != MatchStatus.upcoming
-                ? '${pPoints.toStringAsFixed(1)} Pts'
-                : '${pInfo.credits} Cr',
+            '${pPoints.toStringAsFixed(1)} Pts',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 9,
@@ -347,13 +475,9 @@ class TeamCreationView extends StatelessWidget {
     );
   }
 
-  // ── Header ──────────────────────────────────────────────────────
-
   Widget _buildHeader(BuildContext context, ContestController controller) {
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.primary, // Using app primary color for consistency
-      ),
+      decoration: BoxDecoration(color: AppColors.primary),
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -367,16 +491,18 @@ class TeamCreationView extends StatelessWidget {
                     Text(
                       '${matchData.team1} vs ${matchData.team2}',
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Squad Selection',
                       style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 12),
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -388,117 +514,214 @@ class TeamCreationView extends StatelessWidget {
     );
   }
 
-  // ── Stats bar (X/11 | Team A | Team B | role counts) ────────────
-
   Widget _buildStatsBar(ContestController controller) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: const Color(0xFFF9FAFB),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Obx(() {
         final counts = controller.roleCounts;
-        return Column(
-          children: [
-            // Team distribution row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _teamPill(matchData.team1, controller.team1SelectedCount),
-                _progressIndicator(controller.selectedPlayers.length),
-                _teamPill(matchData.team2, controller.team2SelectedCount),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Role counts row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: PlayerRole.values
-                  .where((r) => r != PlayerRole.none)
-                  .map((role) {
-                final constraints = PlayerUtils.roleConstraints[role]!;
-                final current = counts[role] ?? 0;
-                final min = constraints[0];
-                final max = constraints[1];
-                final isOk = current >= min;
-                return _roleCountChip(
-                  role.name,
-                  current,
-                  min,
-                  max,
-                  isOk,
-                );
-              }).toList(),
-            ),
-          ],
+        final selectedCount = controller.selectedPlayers.length;
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.015),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Top row: Team1 | SELECTED x/11 | Team2
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Team 1 — name on top, count below
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        matchData.team1.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF6B7280),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Obx(() => Text(
+                            '${controller.team1SelectedCount}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF1F2937),
+                            ),
+                          )),
+                    ],
+                  ),
+
+                  // Center: SELECTED x/11
+                  Column(
+                    children: [
+                      const Text(
+                        'SELECTED',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF9CA3AF),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '$selectedCount',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF5A20DF),
+                              ),
+                            ),
+                            const TextSpan(
+                              text: ' / 11',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Team 2 — name on top, count below
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        matchData.team2.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF6B7280),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Obx(() => Text(
+                            '${controller.team2SelectedCount}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF1F2937),
+                            ),
+                          )),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              // Progress bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: SizedBox(
+                  height: 5,
+                  child: LinearProgressIndicator(
+                    value: selectedCount / 11.0,
+                    backgroundColor: const Color(0xFFE5E7EB),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF5A20DF),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              const SizedBox(height: 8),
+
+              // Role counts row (WK, BAT, AR, BOWL)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildRoleStatItem('WK', counts[PlayerRole.wk] ?? 0),
+                  _buildRoleStatItem('BAT', counts[PlayerRole.bat] ?? 0),
+                  _buildRoleStatItem('AR', counts[PlayerRole.ar] ?? 0),
+                  _buildRoleStatItem('BOWL', counts[PlayerRole.bowl] ?? 0),
+                ],
+              ),
+            ],
+          ),
         );
       }),
     );
   }
 
-  Widget _teamPill(String teamName, int count) {
+  Widget _buildRoleStatItem(String label, int count) {
     return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Text(
-          '$teamName: $count',
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-              color: Color(0xFF0F1923), fontSize: 12, fontWeight: FontWeight.bold),
-        ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF6B7280),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '$count',
+            style: const TextStyle(
+              color: Color(0xFF1F2937),
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _progressIndicator(int count) {
-    return Column(
-      children: [
-        Text(
-          '$count/11',
-          style: const TextStyle(
-              color: Color(0xFF0F1923), fontWeight: FontWeight.w900, fontSize: 18),
-        ),
-        Text('Players',
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _roleCountChip(
-      String label, int current, int min, int max, bool isOk) {
-    return Column(
-      children: [
-        Text(
-          '$current',
-          style: TextStyle(
-            color: isOk ? AppColors.accentGreen : Colors.grey.shade400,
-            fontWeight: FontWeight.w900,
-            fontSize: 16,
-          ),
-        ),
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
-
-  // ── Role Tab Bar ─────────────────────────────────────────────────
-
   Widget _buildRoleTabBar(ContestController controller) {
     return Container(
-      color: Colors.grey.shade50,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.grey.shade200)),
+      ),
       child: Obx(() {
         final active = controller.activeRoleFilter.value;
+        final counts = controller.roleCounts;
+        // Build labels with counts: ALL, WK (n), BAT (n), AR (n), BOWL (n)
+        final labels = <String>['ALL'];
+        final roles = [
+          PlayerRole.wk,
+          PlayerRole.bat,
+          PlayerRole.ar,
+          PlayerRole.bowl,
+        ];
+        final roleNames = ['WK', 'BAT', 'AR', 'BOWL'];
+        for (int i = 0; i < roles.length; i++) {
+          final c = counts[roles[i]] ?? 0;
+          labels.add(c > 0 ? '${roleNames[i]} ($c)' : roleNames[i]);
+        }
+
         return Row(
           children: List.generate(_roleLabels.length, (i) {
-            final label = _roleLabels[i];
             final role = _roleValues[i];
             final isActive = active == role;
             return Expanded(
@@ -513,21 +736,19 @@ class TeamCreationView extends StatelessWidget {
                         color: isActive
                             ? AppColors.primary
                             : Colors.transparent,
-                        width: 3,
+                        width: 2.5,
                       ),
                     ),
                   ),
                   child: Text(
-                    label,
+                    labels[i],
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: isActive
                           ? AppColors.primary
-                          : Colors.grey.shade600,
-                      fontWeight: isActive
-                          ? FontWeight.bold
-                          : FontWeight.w500,
-                      fontSize: 13,
+                          : Colors.grey.shade500,
+                      fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
+                      fontSize: 12,
                     ),
                   ),
                 ),
@@ -539,12 +760,10 @@ class TeamCreationView extends StatelessWidget {
     );
   }
 
-  // ── Player List ──────────────────────────────────────────────────
-
   Widget _buildPlayerList(ContestController controller) {
     return Expanded(
       child: Container(
-        color: Colors.white,
+        color: AppColors.background,
         child: Obx(() {
           final players = controller.filteredPlayers;
           if (players.isEmpty) {
@@ -562,7 +781,8 @@ class TeamCreationView extends StatelessWidget {
               final info = players[index];
               return Obx(() {
                 final isSelected = controller.selectedPlayers.contains(info.id);
-                final blocked = !isSelected && controller.canAddPlayer(info) != null;
+                final blocked =
+                    !isSelected && controller.canAddPlayer(info) != null;
                 return _PlayerCard(
                   info: info,
                   isSelected: isSelected,
@@ -578,58 +798,73 @@ class TeamCreationView extends StatelessWidget {
     );
   }
 
-  // ── Next Button ──────────────────────────────────────────────────
-
   Widget _buildNextButton(ContestController controller) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
+    return Builder(
+      builder: (context) {
+        final bottomPadding = MediaQuery.of(context).padding.bottom;
+        return Container(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            bottomPadding > 0 ? bottomPadding + 8 : 16,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(color: const Color(0xFFE5E7EB), width: 1.2),
             ),
-          ],
-        ),
-        child: Obx(() {
-          final isValid = controller.isTeamValid;
-          return ElevatedButton(
-            onPressed: isValid
-                ? () => Get.to(() => CaptainSelectionView(
-                      contest: contest,
-                      matchData: matchData,
-                    ))
-                : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isValid ? AppColors.primary : Colors.grey.shade200,
-              foregroundColor: Colors.white,
-              disabledForegroundColor: Colors.grey.shade400,
-              minimumSize: const Size(double.infinity, 54),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              elevation: isValid ? 2 : 0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  isValid ? 'NEXT: ASSIGN CAPTAIN' : 'SELECT ${PlayerUtils.totalPlayers - controller.selectedPlayers.length} MORE PLAYERS',
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+          ),
+          child: Obx(() {
+            final isValid = controller.isTeamValid;
+            return ElevatedButton(
+              onPressed: isValid
+                  ? () => Get.to(
+                      () => CaptainSelectionView(
+                        contest: contest,
+                        matchData: matchData,
+                      ),
+                    )
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isValid
+                    ? AppColors.primary
+                    : Colors.grey.shade200,
+                foregroundColor: Colors.white,
+                disabledForegroundColor: Colors.grey.shade400,
+                minimumSize: const Size(double.infinity, 54),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                if (isValid) ...[
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_rounded, size: 18),
+                elevation: isValid ? 2 : 0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    isValid
+                        ? 'NEXT: ASSIGN CAPTAIN'
+                        : 'SELECT ${PlayerUtils.totalPlayers - controller.selectedPlayers.length} MORE PLAYERS',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  if (isValid) ...[
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.arrow_forward,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          );
-        }),
-      ),
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 
@@ -640,7 +875,18 @@ class TeamCreationView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_clock_rounded, size: 64, color: Colors.grey.shade300),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.lock,
+              size: 48,
+              color: AppColors.primary.withValues(alpha: 0.5),
+            ),
+          ),
           const SizedBox(height: 16),
           const Text(
             'Squad Selection Closed',
@@ -656,10 +902,7 @@ class TeamCreationView extends StatelessWidget {
             child: Text(
               'This match has already started or completed. You can no longer create or join squads for this match.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
             ),
           ),
         ],
@@ -667,8 +910,6 @@ class TeamCreationView extends StatelessWidget {
     );
   }
 }
-
-// ── Player Card Widget ─────────────────────────────────────────────
 
 class _PlayerCard extends StatelessWidget {
   final PlayerInfo info;
@@ -687,11 +928,16 @@ class _PlayerCard extends StatelessWidget {
 
   Color get _roleColor {
     switch (info.role) {
-      case PlayerRole.wk: return const Color(0xFFE6B800);
-      case PlayerRole.bat: return const Color(0xFF1565C0);
-      case PlayerRole.ar: return const Color(0xFF2E7D32);
-      case PlayerRole.bowl: return const Color(0xFFD84315);
-      case PlayerRole.none: return Colors.grey;
+      case PlayerRole.wk:
+        return const Color(0xFFE6B800);
+      case PlayerRole.bat:
+        return const Color(0xFF1565C0);
+      case PlayerRole.ar:
+        return const Color(0xFF2E7D32);
+      case PlayerRole.bowl:
+        return const Color(0xFFD84315);
+      case PlayerRole.none:
+        return Colors.grey;
     }
   }
 
@@ -705,66 +951,100 @@ class _PlayerCard extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
           decoration: BoxDecoration(
             color: isSelected
-                ? Colors.green.shade50
+                ? AppColors.accentGreen.withValues(alpha: 0.05)
                 : Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? Colors.green.shade300
-                  : Colors.grey.shade200,
-              width: isSelected ? 1.5 : 1,
+                  ? AppColors.accentGreen
+                  : const Color(0xFFE5E7EB),
+              width: 1.2,
             ),
-            boxShadow: [
-              if (!isSelected)
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-            ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(
               children: [
-                // Player Image / Role badge
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey.shade200, width: 1),
-                  ),
-                  child: ClipOval(
-                    child: info.imageUrl != null && info.imageUrl!.isNotEmpty
-                        ? Image.network(
-                            info.imageUrl!,
-                            width: 48,
-                            height: 48,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Center(
-                              child: Text(info.roleLabel,
-                                style: TextStyle(
+                // Player Image with team flag badge
+                Stack(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.grey.shade200,
+                          width: 1,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child:
+                            info.imageUrl != null && info.imageUrl!.isNotEmpty
+                            ? Image.network(
+                                info.imageUrl!,
+                                width: 44,
+                                height: 44,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Center(
+                                      child: Text(
+                                        info.roleLabel,
+                                        style: TextStyle(
+                                          color: _roleColor,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                              )
+                            : Center(
+                                child: Text(
+                                  info.roleLabel,
+                                  style: TextStyle(
                                     color: _roleColor,
                                     fontSize: 10,
-                                    fontWeight: FontWeight.w900)),
-                            ),
-                          )
-                        : Center(
-                            child: Text(info.roleLabel,
-                              style: TextStyle(
-                                  color: _roleColor,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w900)),
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ),
+                    // Team badge overlay — circular
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isTeam1
+                              ? Colors.blue.shade700
+                              : Colors.orange.shade700,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        child: Text(
+                          info.teamName.length > 2
+                              ? info.teamName.substring(0, 2).toUpperCase()
+                              : info.teamName.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 6,
+                            fontWeight: FontWeight.w900,
                           ),
-                  ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 14),
-                // Name + team
+                // Name + role + team
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -772,29 +1052,20 @@ class _PlayerCard extends StatelessWidget {
                       Text(
                         info.name,
                         style: const TextStyle(
-                            color: Color(0xFF0F1923),
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold),
+                          color: Color(0xFF0F1923),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isTeam1
-                                  ? Colors.blue.shade50
-                                  : Colors.orange.shade50,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              info.teamName,
-                              style: TextStyle(
-                                  color: isTeam1
-                                      ? Colors.blue.shade700
-                                      : Colors.orange.shade800,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold),
+                          Text(
+                            info.roleLabel,
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
@@ -802,28 +1073,27 @@ class _PlayerCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Add / Remove button
+
+                // Add / Remove button - primary when not selected, green when selected
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
                   width: 34,
                   height: 34,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? Colors.green.shade500
-                        : Colors.white,
+                    color: isSelected ? AppColors.accentGreen : Colors.white,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected
-                          ? Colors.green.shade500
-                          : Colors.grey.shade300,
-                      width: 1.5,
+                          ? AppColors.accentGreen
+                          : AppColors.primary,
+                      width: 1.2,
                     ),
                   ),
                   child: Icon(
-                    isSelected ? Icons.check_rounded : Icons.add_rounded,
+                    isSelected ? Icons.check_circle : Icons.add,
                     size: 20,
-                    color: isSelected ? Colors.white : Colors.grey.shade600,
+                    color: isSelected ? Colors.white : AppColors.primary,
                   ),
                 ),
               ],
@@ -834,4 +1104,3 @@ class _PlayerCard extends StatelessWidget {
     );
   }
 }
-

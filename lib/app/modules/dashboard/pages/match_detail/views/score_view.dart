@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:ok11/app/data/models/match_data.dart';
 
 import 'package:ok11/app/data/models/submission_data.dart';
@@ -31,8 +32,7 @@ class ScoreView extends GetView<MatchDetailController> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.inbox_outlined,
+                      Icon(Icons.inbox,
                         size: 64,
                         color: AppColors.textSecondary.withValues(alpha: 0.5),
                       ),
@@ -71,8 +71,7 @@ class ScoreView extends GetView<MatchDetailController> {
                 ),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.hourglass_empty_rounded,
+              child: Icon(Icons.hourglass_full,
                 size: 64,
                 color: AppColors.primary,
               ),
@@ -115,8 +114,7 @@ class ScoreView extends GetView<MatchDetailController> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.check_circle_rounded,
+                  Icon(Icons.check_circle,
                     color: AppColors.accentGreen,
                     size: 20,
                   ),
@@ -143,8 +141,7 @@ class ScoreView extends GetView<MatchDetailController> {
                           controller.onTabChanged(0);
                         },
                         borderRadius: BorderRadius.circular(8),
-                        child: Icon(
-                          Icons.edit_outlined,
+                        child: Icon(Icons.edit,
                           size: 18,
                           color: AppColors.primary,
                         ),
@@ -207,8 +204,7 @@ class ScoreView extends GetView<MatchDetailController> {
                     children: [
                       Row(
                         children: [
-                          Icon(
-                            Icons.edit_rounded,
+                          Icon(Icons.edit,
                             color: AppColors.primary,
                             size: 24,
                           ),
@@ -240,7 +236,7 @@ class ScoreView extends GetView<MatchDetailController> {
                                 );
                                 controller.onTabChanged(0);
                               },
-                              icon: const Icon(Icons.people_rounded, size: 18),
+                              icon: const Icon(Icons.people_alt, size: 18),
                               label: const Text('Edit Squad'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.primary,
@@ -267,7 +263,7 @@ class ScoreView extends GetView<MatchDetailController> {
                                 );
                                 controller.onTabChanged(1);
                               },
-                              icon: const Icon(Icons.quiz_rounded, size: 18),
+                              icon: const Icon(Icons.help, size: 18),
                               label: const Text('Edit Quiz'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
@@ -373,8 +369,7 @@ class ScoreView extends GetView<MatchDetailController> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.emoji_events_rounded,
+          Icon(Icons.military_tech,
             size: 32,
             color: AppColors.accentGreen,
           ),
@@ -472,8 +467,7 @@ class ScoreView extends GetView<MatchDetailController> {
                 padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.people_outline_rounded,
+                    Icon(Icons.people_alt,
                       color: AppColors.primary,
                       size: 24,
                     ),
@@ -487,10 +481,9 @@ class ScoreView extends GetView<MatchDetailController> {
                         ),
                       ),
                     ),
-                    Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
+                    Icon(isExpanded
+                          ? Icons.arrow_upward
+                          : Icons.arrow_downward,
                       color: AppColors.primary,
                       size: 24,
                     ),
@@ -528,8 +521,7 @@ class ScoreView extends GetView<MatchDetailController> {
                             ),
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.person_rounded,
+                                Icon(Icons.person,
                                   color: AppColors.primary,
                                   size: 18,
                                 ),
@@ -571,8 +563,7 @@ class ScoreView extends GetView<MatchDetailController> {
                             ),
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.person_rounded,
+                                Icon(Icons.person,
                                   color: AppColors.accentBlue,
                                   size: 18,
                                 ),
@@ -636,8 +627,7 @@ class ScoreView extends GetView<MatchDetailController> {
                 padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.quiz_outlined,
+                    Icon(Icons.help,
                       color: AppColors.primary,
                       size: 24,
                     ),
@@ -651,10 +641,9 @@ class ScoreView extends GetView<MatchDetailController> {
                         ),
                       ),
                     ),
-                    Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
+                    Icon(isExpanded
+                          ? Icons.arrow_upward
+                          : Icons.arrow_downward,
                       color: AppColors.primary,
                       size: 24,
                     ),
@@ -809,8 +798,7 @@ class ScoreView extends GetView<MatchDetailController> {
       backgroundColor = AppColors.accentGreen.withValues(alpha: 0.15);
       textColor = AppColors.accentGreen;
       borderColor = AppColors.accentGreen;
-      leadingIcon = Icon(
-        Icons.check_circle_rounded,
+      leadingIcon = Icon(Icons.check_circle,
         color: AppColors.accentGreen,
         size: 20,
       );
@@ -820,8 +808,7 @@ class ScoreView extends GetView<MatchDetailController> {
       backgroundColor = AppColors.accentPink.withValues(alpha: 0.15);
       textColor = AppColors.accentPink;
       borderColor = AppColors.accentPink;
-      leadingIcon = Icon(
-        Icons.cancel_rounded,
+      leadingIcon = Icon(Icons.cancel,
         color: AppColors.accentPink,
         size: 20,
       );
@@ -831,8 +818,7 @@ class ScoreView extends GetView<MatchDetailController> {
       backgroundColor = AppColors.accentGreen.withValues(alpha: 0.15);
       textColor = AppColors.accentGreen;
       borderColor = AppColors.accentGreen;
-      leadingIcon = Icon(
-        Icons.check_circle_rounded,
+      leadingIcon = Icon(Icons.check_circle,
         color: AppColors.accentGreen,
         size: 20,
       );

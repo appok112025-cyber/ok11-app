@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFF1976D2);
+  static const Color primary = Color(0xFF5B2EFF);
   static const Color background = Color(0xFFF5F7FA);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceVariant = Color(0xFFF8F9FA);
@@ -12,7 +12,7 @@ class AppColors {
   // Primary color variations
   static Color primaryLight = primary.withValues(alpha: 0.08);
   static Color primaryLighter = primary.withValues(alpha: 0.04);
-  static Color primaryDark = const Color(0xFF1565C0);
+  static const Color primaryDark = Color(0xFF4A1FE0);
 
   // Vibrant accent colors
   static const Color accentOrange = Color(0xFFFF6B35);
@@ -24,11 +24,19 @@ class AppColors {
   static const Color accentRed = Color(0xFFE74C3C);
   static const Color accentBlue = Color(0xFF3498DB);
   static const Color accentIndigo = Color(0xFF5D4E75);
+  static const Color accentGold = Color(0xFFFFB800);
 
   // Status colors
   static const Color success = Color(0xFF27AE60);
   static const Color warning = Color(0xFFF39C12);
   static const Color info = Color(0xFF3498DB);
+
+  // Contest colors
+  static const Color prizeGreen = Color(0xFF2E7D32);
+  static const Color freeGreen = Color(0xFF4CAF50);
+  static const Color pitchGreen = Color(0xFF4CAF50);
+  static const Color pitchGreenDark = Color(0xFF2E7D32);
+  static const Color pitchGreenBright = Color(0xFF43A047);
 
   // Team colors (cricket teams)
   static const Color teamIndia = Color(0xFFFF9933);
@@ -43,7 +51,7 @@ class AppColors {
   static const Color teamAfghanistan = Color(0xFF000000);
 
   // Gradient colors
-  static List<Color> get primaryGradient => [primary, const Color(0xFF42A5F5)];
+  static List<Color> get primaryGradient => [primary, const Color(0xFF7C4DFF)];
 
   static List<Color> get successGradient => [accentGreen, accentTeal];
 
@@ -55,7 +63,7 @@ class AppColors {
     accentOrange,
   ];
 
-  static List<Color> get teamGradient => [primary, accentBlue, accentTeal];
+  static List<Color> get teamGradient => [primary, const Color(0xFF7C4DFF), accentTeal];
 
   static List<Color> getGradientWithAlpha(List<Color> gradient, double alpha) {
     return gradient.map((c) => c.withValues(alpha: alpha)).toList();

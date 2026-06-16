@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:ok11/app/theme/app_colors.dart';
 import 'package:ok11/app/theme/app_text_styles.dart';
 
@@ -14,9 +15,10 @@ class SaveProceedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.fromLTRB(20, 20, 20, bottomPadding > 0 ? bottomPadding + 8 : 20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         boxShadow: [
@@ -66,8 +68,7 @@ class SaveProceedButton extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.arrow_forward_rounded,
+                    child: const Icon(Icons.arrow_forward,
                       size: 20,
                       color: Colors.white,
                     ),

@@ -84,19 +84,19 @@ class LoginController extends GetxController {
             errorMsg.contains('timeout') ||
             errorMsg.contains('network')) {
           errorMessage.value =
-              'Network error. Please check your connection and try again.';
+              'Network error ($e). Please check your connection and try again.';
         } else if (errorMsg.contains('401') ||
             errorMsg.contains('unauthorized')) {
-          errorMessage.value = 'Authentication failed. Please try again.';
+          errorMessage.value = 'Authentication failed ($e). Please try again.';
         } else {
-          errorMessage.value = 'Failed to sign in. Please try again.';
+          errorMessage.value = 'Failed to sign in: $e';
         }
         _firebaseService.logError(e, StackTrace.current);
         await _firebaseAuth.signOut();
       }
     } catch (e) {
       debugPrint('❌ LoginController.signInWithGoogle: Error: $e');
-      errorMessage.value = 'Sign in failed. Please try again.';
+      errorMessage.value = 'Sign in failed: $e';
       _firebaseService.logError(e, StackTrace.current);
     } finally {
       isGoogleLoading.value = false;

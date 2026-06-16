@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:ok11/app/modules/auth/login/controllers/login_controller.dart';
 import 'package:ok11/app/theme/app_colors.dart';
 import 'package:ok11/app/theme/app_text_styles.dart';
@@ -207,8 +208,7 @@ class LoginView extends GetView<LoginController> {
                       color: AppColors.error.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.error_outline_rounded,
+                    child: Icon(Icons.error,
                       color: AppColors.error,
                       size: 18,
                     ),

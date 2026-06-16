@@ -9,6 +9,7 @@ import 'package:ok11/app/services/firebase_service.dart';
 import 'package:ok11/app/services/submission_service.dart';
 import 'package:ok11/app/widgets/common/app_snackbars.dart';
 import 'package:ok11/app/stores/auth_store.dart';
+import 'package:ok11/app/utils/status_theme.dart';
 
 class HomeController extends GetxController {
   final _repository = MatchRepository();
@@ -19,12 +20,12 @@ class HomeController extends GetxController {
   // Reactive Wallet Balance
   final walletBalance = 0.0.obs;
 
-  // Withdraw from Wallet (Minimum 1000)
+  // Withdraw from Wallet (Minimum 2000)
   void withdraw(double amount) {
-    if (walletBalance.value < 1000) {
+    if (walletBalance.value < 2000) {
       Get.snackbar(
         'Withdrawal Failed',
-        'Minimum withdrawal amount is ₹1,000',
+        'Minimum withdrawal amount is ₹2,000',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFE53935),
         colorText: Colors.white,

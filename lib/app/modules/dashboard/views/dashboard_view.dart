@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:ok11/app/modules/dashboard/controllers/dashboard_controller.dart';
 import 'package:ok11/app/modules/dashboard/pages/home/views/home_view.dart';
 import 'package:ok11/app/modules/dashboard/pages/profile/views/profile_view.dart';
@@ -21,64 +22,57 @@ class DashboardView extends GetView<DashboardController> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-                spreadRadius: 0,
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 16,
+                offset: const Offset(0, -2),
               ),
             ],
           ),
           child: SafeArea(
-            child: BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              currentIndex: controller.currentIndex.value,
-              onTap: controller.onTabTapped,
-              backgroundColor: Colors.white,
-              selectedItemColor: AppColors.primary,
-              unselectedItemColor: AppColors.textSecondary,
-              selectedLabelStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.3,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(0, Icons.home, Icons.home, 'Home'),
+                  _buildNavItem(1, Icons.emoji_events, Icons.emoji_events, 'Matches'),
+                  _buildNavItem(2, Icons.view_in_ar, Icons.view_in_ar, 'AR Arena'),
+                  _buildNavItem(3, Icons.person, Icons.person, 'Profile'),
+                ],
               ),
-              unselectedLabelStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.2,
-              ),
-              elevation: 0,
-              selectedIconTheme: IconThemeData(
-                size: 26,
-                color: AppColors.primary,
-              ),
-              unselectedIconTheme: IconThemeData(
-                size: 24,
-                color: AppColors.textSecondary,
-              ),
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined),
-                  activeIcon: Icon(Icons.home_rounded),
-                  label: 'Home',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.sports_soccer_outlined),
-                  activeIcon: Icon(Icons.sports_soccer_rounded),
-                  label: 'My Matches',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.view_in_ar_outlined),
-                  activeIcon: Icon(Icons.view_in_ar_rounded),
-                  label: 'AR',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.person_outline),
-                  activeIcon: Icon(Icons.person_rounded),
-                  label: 'Profile',
-                ),
-              ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon, String label) {
+    final isSelected = controller.currentIndex.value == index;
+    return GestureDetector(
+      onTap: () => controller.onTabTapped(index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? activeIcon : inactiveIcon,
+              size: 24,
+              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
       ),
     );

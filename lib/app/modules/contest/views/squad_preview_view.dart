@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
+import 'package:unicons/unicons.dart';
 import 'package:ok11/app/data/models/match_data.dart';
 import 'package:ok11/app/utils/player_utils.dart';
 import 'package:ok11/app/utils/status_theme.dart';
@@ -35,7 +36,8 @@ class SquadPreviewView extends StatelessWidget {
     try {
       // 1. Capture the repaint boundary
       final RenderRepaintBoundary? boundary =
-          _repaintKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+          _repaintKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
       if (boundary == null) {
         Get.snackbar(
           'Capture Error',
@@ -49,8 +51,9 @@ class SquadPreviewView extends StatelessWidget {
 
       // Convert to ui.Image at high resolution
       final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      final ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
+      final ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
       if (byteData == null) return;
       final Uint8List pngBytes = byteData.buffer.asUint8List();
 
@@ -59,9 +62,11 @@ class SquadPreviewView extends StatelessWidget {
       if (Platform.isAndroid) {
         final dir = Directory('/storage/emulated/0/Download');
         if (await dir.exists()) {
-          path = '${dir.path}/ok11_squad_${DateTime.now().millisecondsSinceEpoch}.png';
+          path =
+              '${dir.path}/ok11_squad_${DateTime.now().millisecondsSinceEpoch}.png';
         } else {
-          path = '/sdcard/Download/ok11_squad_${DateTime.now().millisecondsSinceEpoch}.png';
+          path =
+              '/sdcard/Download/ok11_squad_${DateTime.now().millisecondsSinceEpoch}.png';
         }
       } else {
         path = 'ok11_squad_${DateTime.now().millisecondsSinceEpoch}.png';
@@ -70,14 +75,16 @@ class SquadPreviewView extends StatelessWidget {
       final file = File(path);
       await file.writeAsBytes(pngBytes);
 
-      // 3. Show gorgeous success dialog
+      // 3. Show success dialog
       Get.dialog(
         AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.green.shade600, size: 28),
+              Icon(Icons.check_circle, color: AppColors.accentGreen, size: 28),
               const SizedBox(width: 10),
               const Text(
                 'Download Complete',
@@ -94,7 +101,11 @@ class SquadPreviewView extends StatelessWidget {
             children: [
               const Text(
                 'The squad layout image has been successfully downloaded and saved directly to your device\'s downloads folder.',
-                style: TextStyle(fontSize: 14, color: Color(0xFF0F1923), height: 1.4),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF0F1923),
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 14),
               Container(
@@ -110,7 +121,11 @@ class SquadPreviewView extends StatelessWidget {
                   children: [
                     Text(
                       'Saved Path:',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade500),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade500,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -133,8 +148,13 @@ class SquadPreviewView extends StatelessWidget {
               style: TextButton.styleFrom(
                 foregroundColor: Colors.white,
                 backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text('AWESOME'),
             ),
@@ -162,56 +182,45 @@ class SquadPreviewView extends StatelessWidget {
     final bowls = players.where((p) => p.role == PlayerRole.bowl).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF143F23), // Premium dark green stadium color
+      backgroundColor: const Color(0xFF2E7D32),
       body: Stack(
         children: [
-          // ── REPAINT BOUNDARY (Full Screen capturing both background & players) ──
           RepaintBoundary(
             key: _repaintKey,
             child: Stack(
               children: [
-                // Solid background color inside the RepaintBoundary so it gets captured in downloads
+                // Bright green background
                 Positioned.fill(
-                  child: Container(
-                    color: const Color(0xFF143F23),
+                  child: Container(color: const Color(0xFF2E7D32)),
+                ),
+
+                // Cricket Field Ground Grass Background
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/images/ground.png',
+                    fit: BoxFit.cover,
                   ),
                 ),
 
-                // 1. Cricket Field Ground Grass Background (Perfect Square in the Center)
-                Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: AspectRatio(
-                      aspectRatio: 1.0,
-                      child: Image.asset(
-                        'assets/images/ground.png',
-                        fit: BoxFit.fill,
-                      ),
-                    ),
-                  ),
-                ),
+                // Subdued overlay
+                Container(color: Colors.black.withValues(alpha: 0.1)),
 
-                // Subdued field overlay to make player names pop
-                Container(
-                  color: Colors.black.withValues(alpha: 0.15),
-                ),
-
-                // 2. Main Layout Tree (Takes up the entire full screen height!)
+                // Main Layout
                 SafeArea(
                   child: Column(
                     children: [
-                      // Translucent header
+                      // Header
                       _buildFieldHeader(),
 
-                      // Cricket Grid Spacers
+                      // Squad Grid with role headings
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: _buildSquadGrid(players),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: _buildSquadByRole(wks, bats, ars, bowls),
                         ),
                       ),
 
-                      // Translucent footer showing Teams
+                      // Footer
                       _buildFieldFooter(),
                     ],
                   ),
@@ -220,7 +229,6 @@ class SquadPreviewView extends StatelessWidget {
             ),
           ),
 
-          // ── APPBAR CLOSE BUTTON ──
           Positioned(
             top: MediaQuery.of(context).padding.top + 12,
             left: 16,
@@ -228,12 +236,12 @@ class SquadPreviewView extends StatelessWidget {
               onTap: () => Get.back(),
               child: Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Colors.black38,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.close_rounded,
+                  UniconsLine.times,
                   color: Colors.white,
                   size: 24,
                 ),
@@ -242,6 +250,71 @@ class SquadPreviewView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSquadByRole(
+    List<PlayerInfo> wks,
+    List<PlayerInfo> bats,
+    List<PlayerInfo> ars,
+    List<PlayerInfo> bowls,
+  ) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        if (wks.isNotEmpty) ...[
+          _buildRoleHeading('WICKET KEEPER'),
+          _buildPlayerRow(wks),
+        ],
+        if (bats.isNotEmpty) ...[
+          _buildRoleHeading('BATTERS'),
+          _buildPlayerRow(bats),
+        ],
+        if (ars.isNotEmpty) ...[
+          _buildRoleHeading('ALL ROUNDERS'),
+          _buildPlayerRow(ars),
+        ],
+        if (bowls.isNotEmpty) ...[
+          _buildRoleHeading('BOWLERS'),
+          _buildPlayerRow(bowls),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildRoleHeading(String title) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.9),
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlayerRow(List<PlayerInfo> players) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: players.map((p) {
+        final isCap = captainId == p.id;
+        final isVc = viceCaptainId == p.id;
+        final pPoints = match.playerPoints[p.id] ?? 0.0;
+        final isDt = match.status != MatchStatus.upcoming && pPoints >= 80;
+
+        return _buildPlayerItem(p, isCap, isVc, isDt, pPoints);
+      }).toList(),
     );
   }
 
@@ -271,7 +344,10 @@ class SquadPreviewView extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white30,
                         borderRadius: BorderRadius.circular(4),
@@ -309,11 +385,7 @@ class SquadPreviewView extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white24),
               ),
-              child: const Icon(
-                Icons.download_rounded,
-                color: Colors.greenAccent,
-                size: 18,
-              ),
+              child: Icon(Icons.download, color: Colors.greenAccent, size: 18),
             ),
           ),
         ],
@@ -340,68 +412,13 @@ class SquadPreviewView extends StatelessWidget {
     );
   }
 
-  Widget _buildSquadGrid(List<PlayerInfo> players) {
-    final capInfo = players.firstWhereOrNull((p) => p.id == captainId);
-    final vcInfo = players.firstWhereOrNull((p) => p.id == viceCaptainId);
-
-    // Row 1: Captain & Vice-Captain
-    final List<PlayerInfo> row1 = [];
-    if (capInfo != null) row1.add(capInfo);
-    if (vcInfo != null) row1.add(vcInfo);
-
-    // Get all remaining players
-    final allRemaining = players.where((p) => p.id != captainId && p.id != viceCaptainId).toList();
-    
-    // Fallback: If row1 doesn't have 2 players (e.g. invalid selection data), pull from list
-    while (row1.length < 2 && allRemaining.isNotEmpty) {
-      row1.add(allRemaining.removeAt(0));
-    }
-
-    // Rows 2, 3, 4: Divide remaining 9 players into 3 rows of 3 players each
-    final List<PlayerInfo> row2 = [];
-    final List<PlayerInfo> row3 = [];
-    final List<PlayerInfo> row4 = [];
-
-    for (int i = 0; i < allRemaining.length; i++) {
-      if (i < 3) {
-        row2.add(allRemaining[i]);
-      } else if (i < 6) {
-        row3.add(allRemaining[i]);
-      } else {
-        row4.add(allRemaining[i]);
-      }
-    }
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildRowWrapper(row1),
-        _buildRowWrapper(row2),
-        _buildRowWrapper(row3),
-        _buildRowWrapper(row4),
-      ],
-    );
-  }
-
-  Widget _buildRowWrapper(List<PlayerInfo> list) {
-    if (list.isEmpty) return const SizedBox();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: list.map((p) {
-        final isCap = captainId == p.id;
-        final isVc = viceCaptainId == p.id;
-        final pPoints = match.playerPoints[p.id] ?? 0.0;
-        final isDt = match.status != MatchStatus.upcoming && pPoints >= 80;
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: _buildPlayerItem(p, isCap, isVc, isDt, pPoints),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildPlayerItem(PlayerInfo pInfo, bool isCap, bool isVc, bool isDt, double pPoints) {
+  Widget _buildPlayerItem(
+    PlayerInfo pInfo,
+    bool isCap,
+    bool isVc,
+    bool isDt,
+    double pPoints,
+  ) {
     final isTeam1 = pInfo.teamName == match.team1;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -410,14 +427,14 @@ class SquadPreviewView extends StatelessWidget {
           clipBehavior: Clip.none,
           alignment: Alignment.center,
           children: [
-            // Headshot or team color jersey avatar circle
+            // Avatar circle
             Container(
-              width: 52,
-              height: 52,
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
-                color: isTeam1 
-                    ? const Color(0xFF1E3A8A) // Team A: Premium Dark Blue
-                    : const Color(0xFFC2410C), // Team B: Premium Dark Orange
+                color: isTeam1
+                    ? const Color(0xFF1E3A8A)
+                    : const Color(0xFFC2410C),
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
@@ -433,27 +450,35 @@ class SquadPreviewView extends StatelessWidget {
                     ? Image.network(
                         pInfo.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (c, e, s) => const Center(
-                          child: Icon(Icons.person, color: Colors.white70, size: 28),
+                        errorBuilder: (c, e, s) => Center(
+                          child: Icon(
+                            Icons.person,
+                            color: Colors.white70,
+                            size: 26,
+                          ),
                         ),
                       )
-                    : const Center(
-                        child: Icon(Icons.person, color: Colors.white70, size: 28),
+                    : Center(
+                        child: Icon(
+                          Icons.person,
+                          color: Colors.white70,
+                          size: 26,
+                        ),
                       ),
               ),
             ),
 
-            // Captain / Vice-Captain badge on Top-Left
+            // Captain / Vice-Captain badge - Purple C, Gold VC
             if (isCap || isVc)
               Positioned(
                 top: -4,
                 left: -4,
                 child: Container(
-                  width: 22,
-                  height: 22,
+                  width: 20,
+                  height: 20,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: isCap ? AppColors.primary : AppColors.accentGold,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 1.5),
                   ),
@@ -461,20 +486,23 @@ class SquadPreviewView extends StatelessWidget {
                     isCap ? 'C' : 'VC',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 8,
+                      fontSize: 7,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
               ),
 
-            // DT Gold Shield Badge on Bottom-Right
+            // DT Badge
             if (isDt)
               Positioned(
                 bottom: -2,
                 right: -2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.amber.shade600,
                     borderRadius: BorderRadius.circular(4),
@@ -492,12 +520,12 @@ class SquadPreviewView extends StatelessWidget {
               ),
           ],
         ),
-        
-        const SizedBox(height: 6),
 
-        // Name Pill (White container with dark text)
+        const SizedBox(height: 5),
+
+        // Name Pill
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(6),
@@ -513,28 +541,21 @@ class SquadPreviewView extends StatelessWidget {
             pInfo.name,
             style: const TextStyle(
               color: Color(0xFF0F1923),
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: FontWeight.w900,
             ),
             textAlign: TextAlign.center,
           ),
         ),
 
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
 
-        // Points Pill (Solid dark contrast container for 100% readability)
+        // Points Pill
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(6),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 1,
-                offset: const Offset(0, 1),
-              ),
-            ],
           ),
           child: Text(
             match.status != MatchStatus.upcoming
@@ -542,7 +563,7 @@ class SquadPreviewView extends StatelessWidget {
                 : '${pInfo.credits} Cr',
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 9,
+              fontSize: 8,
               fontWeight: FontWeight.w900,
             ),
           ),

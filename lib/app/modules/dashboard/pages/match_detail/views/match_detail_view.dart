@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:ok11/app/data/models/match_data.dart';
 import 'package:ok11/app/modules/dashboard/pages/match_detail/controllers/match_detail_controller.dart';
 import 'package:ok11/app/modules/dashboard/pages/match_detail/views/squad_view.dart';
@@ -32,14 +33,28 @@ class MatchDetailView extends GetView<MatchDetailController> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,
+            color: Colors.white,
+            size: 24,
+          ),
           onPressed: () {
             _refreshHomeOnBack();
             Get.back();
           },
         ),
-        title: Text(matchData?.title ?? teams ?? 'Match'),
+        title: Text(
+          matchData?.title ?? teams ?? 'Match',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         centerTitle: false,
         /* Appbar contests button disabled as requested
         actions: [
@@ -65,14 +80,8 @@ class MatchDetailView extends GetView<MatchDetailController> {
             return TabBarWidget(
               selectedTab: controller.selectedTab,
               tabs: const ['Contest', 'Team'],
-              icons: const [
-                Icons.emoji_events_outlined,
-                Icons.people_outline_rounded,
-              ],
-              enabledTabs: [
-                true, // Contest always enabled
-                true, // Team always enabled
-              ],
+              icons: const [],
+              enabledTabs: const [true, true],
               onTabChanged: (index) {
                 controller.onTabChanged(index);
               },

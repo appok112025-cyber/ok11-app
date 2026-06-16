@@ -21,6 +21,8 @@ class UpdateProfileController extends GetxController {
   firebase_auth.User? get currentUser =>
       firebase_auth.FirebaseAuth.instance.currentUser;
 
+  User? get userData => _authStore.user.value;
+
   final hasChanges = false.obs;
   Timer? _debounceTimer;
 

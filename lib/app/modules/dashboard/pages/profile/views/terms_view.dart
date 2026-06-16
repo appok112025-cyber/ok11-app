@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:ok11/app/modules/dashboard/pages/profile/controllers/terms_controller.dart';
 import 'package:ok11/app/theme/app_colors.dart';
 import 'package:ok11/app/theme/app_text_styles.dart';
@@ -15,7 +16,10 @@ class TermsView extends GetView<TermsController> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,
+            color: Colors.white,
+            size: 24,
+          ),
           onPressed: () => Get.back(),
         ),
         title: const Text('Terms & Conditions'),
@@ -24,7 +28,7 @@ class TermsView extends GetView<TermsController> {
       body: SafeArea(
         child: Obx(
           () => controller.isLoading.value
-              ? const TermsShimmer()
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -68,8 +72,7 @@ class TermsView extends GetView<TermsController> {
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(
-                                Icons.description_rounded,
+                              child: const Icon(Icons.description,
                                 color: Colors.white,
                                 size: 28,
                               ),
@@ -88,34 +91,36 @@ class TermsView extends GetView<TermsController> {
                           ],
                         ),
                       ),
-                      if (controller.termsContent.value?.content != null &&
-                          controller
-                              .termsContent
-                              .value!
-                              .content!
-                              .isNotEmpty) ...[
-                        const SizedBox(height: 24),
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: AppColors.primaryLighter,
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            HtmlUtils.stripHtmlTags(
-                              controller.termsContent.value!.content!,
-                            ),
-                            style: AppTextStyles.body1.copyWith(
-                              color: AppColors.textPrimary,
-                              fontSize: 16,
-                              height: 1.6,
-                            ),
-                          ),
-                        ),
+                      if (controller.termsContent.value?.content != null) ...[
+                        (() {
+                          final stripped = HtmlUtils.stripHtmlTags(controller.termsContent.value!.content!);
+                          if (stripped.isEmpty) return const SizedBox.shrink();
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 24),
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: AppColors.primaryLighter,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  stripped,
+                                  style: AppTextStyles.body1.copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 16,
+                                    height: 1.6,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        })(),
                       ],
                       if (controller.termsContent.value?.items != null &&
                           controller.termsContent.value!.items.isNotEmpty) ...[
@@ -168,8 +173,7 @@ class TermsView extends GetView<TermsController> {
                         Center(
                           child: Column(
                             children: [
-                              Icon(
-                                Icons.description_outlined,
+                              Icon(Icons.description,
                                 size: 48,
                                 color: AppColors.textSecondary.withValues(
                                   alpha: 0.5,
@@ -196,14 +200,14 @@ class TermsView extends GetView<TermsController> {
 
   IconData _getTermIcon(int index) {
     final icons = [
-      Icons.verified_user_rounded,
-      Icons.money_off_rounded,
-      Icons.psychology_rounded,
-      Icons.security_rounded,
-      Icons.lock_rounded,
-      Icons.gavel_rounded,
-      Icons.privacy_tip_rounded,
-      Icons.rule_rounded,
+      Icons.shield,
+      Icons.receipt_long,
+      Icons.science,
+      Icons.shield,
+      Icons.lock,
+      Icons.gavel,
+      Icons.vpn_key,
+      Icons.add_box,
     ];
     return icons[index % icons.length];
   }

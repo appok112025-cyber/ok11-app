@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+
 import 'package:ok11/app/routes/app_pages.dart';
 import 'package:ok11/app/theme/app_colors.dart';
 import 'package:ok11/app/theme/app_text_styles.dart';
@@ -27,8 +28,7 @@ class BlockedView extends StatelessWidget {
                   color: AppColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.block_rounded,
+                child: Icon(Icons.block,
                   size: 64,
                   color: AppColors.error,
                 ),
@@ -69,8 +69,7 @@ class BlockedView extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.email_outlined,
+                        Icon(Icons.email,
                           size: 24,
                           color: AppColors.primary,
                         ),
@@ -105,7 +104,7 @@ class BlockedView extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: () => _copyEmail(contactEmail),
-                        icon: const Icon(Icons.copy_rounded, size: 20),
+                        icon: const Icon(Icons.copy, size: 20),
                         label: const Text('Copy Email'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,

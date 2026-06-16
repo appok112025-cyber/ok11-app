@@ -12,6 +12,7 @@ class PointsController extends GetxController {
 
   final isLoading = true.obs;
   final pointsContent = Rxn<PointsContent>();
+  final selectedTab = 0.obs;
 
   @override
   void onInit() {

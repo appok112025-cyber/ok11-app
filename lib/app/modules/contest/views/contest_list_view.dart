@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:ok11/app/data/models/match_data.dart';
 import 'package:ok11/app/data/models/contest_model.dart';
 import 'package:ok11/app/modules/contest/controllers/contest_controller.dart';
@@ -42,7 +43,7 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.isLoading.value && controller.contests.isEmpty) {
-        return const Center(child: CircularProgressIndicator());
+        return Center(child: CircularProgressIndicator(color: AppColors.primary));
       }
 
       if (controller.contests.isEmpty) {
@@ -50,10 +51,21 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.sports_cricket, size: 64, color: Colors.grey.shade400),
-              SizedBox(height: 16),
-              Text('No contests available for this match currently.', 
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 16)
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.play_arrow, size: 48, color: AppColors.primary),
+              ),
+              const SizedBox(height: 16),
+              Text('No contests available', 
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)
+              ),
+              const SizedBox(height: 6),
+              Text('Check back later for new contests', 
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)
               ),
             ],
           ),
@@ -61,7 +73,7 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
       }
 
       return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 16),
         itemCount: controller.contests.length,
         itemBuilder: (context, index) {
           final contest = controller.contests[index];
@@ -77,7 +89,7 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
             onTap: isLocked ? () {
               Get.snackbar('Coming Soon', 'This contest will open soon!',
                 snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: const Color(0xFFB8860B),
+                backgroundColor: AppColors.primary,
                 colorText: Colors.white,
                 borderRadius: 12,
                 margin: const EdgeInsets.all(16),
@@ -87,186 +99,137 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isLocked ? const Color(0xFFFFD700).withValues(alpha: 0.5) : Colors.grey.shade200,
-                  width: isLocked ? 1.5 : 1,
+                  color: isLocked ? AppColors.accentGold.withValues(alpha: 0.5) : Colors.grey.shade200,
+                  width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── Top accent bar ──
-                  Container(
-                    height: 3,
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                      gradient: LinearGradient(
-                        colors: isLocked
-                            ? [const Color(0xFFFFD700), const Color(0xFFFFC107)]
-                            : [AppColors.primary, const Color(0xFF42A5F5)],
-                      ),
-                    ),
-                  ),
-
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+                    padding: const EdgeInsets.all(10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Name + status chip row ──
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                contest.name,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF0F1923),
-                                  letterSpacing: -0.2,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: isLocked
-                                    ? const Color(0xFFFFD700).withValues(alpha: 0.12)
-                                    : AppColors.primary.withValues(alpha: 0.09),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                isLocked ? '🔒 COMING SOON' : contest.status.toUpperCase(),
-                                style: TextStyle(
-                                  color: isLocked ? const Color(0xFFB8860B) : AppColors.primary,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.4,
-                                ),
-                              ),
-                            ),
-                          ],
+                        // Title
+                        Text(
+                          contest.name,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F1923),
+                          ),
                         ),
-
                         const SizedBox(height: 10),
-
-                        // ── Prize + Entry row ──
+                        
+                        // Prize Pool and Join button row
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Prize Pool
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: isLocked ? null : () => _showPrizePoolBreakdown(context, contest),
-                                child: Row(
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'PRIZE POOL',
-                                          style: TextStyle(
-                                            color: Colors.grey.shade500,
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: 0.5,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Row(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              '₹${contest.firstPrize.toInt()}',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w900,
-                                                color: Colors.green.shade700,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 3),
-                                            Icon(Icons.keyboard_arrow_down_rounded,
-                                                size: 15, color: Colors.green.shade500),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            // Divider
-                            Container(width: 1, height: 36, color: Colors.grey.shade100),
-                            const SizedBox(width: 16),
-
-                            // Entry Fee
                             Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'ENTRY FEE',
+                                  'PRIZE POOL',
                                   style: TextStyle(
                                     color: Colors.grey.shade500,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.5,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
-                                if (contest.entryFee == 0)
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (contest.originalEntryFee > 0) ...[ 
-                                        Text(
-                                          '₹${contest.originalEntryFee.toInt()}',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.grey.shade400,
-                                            decoration: TextDecoration.lineThrough,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                      ],
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [Color(0xFF27AE60), Color(0xFF2ECC71)],
-                                          ),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: const Text(
-                                          'FREE',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.white,
-                                            letterSpacing: 0.5,
-                                          ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '₹${contest.firstPrize.toInt()}', // Simplified for design
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Obx(() {
+                                  final hasJoined = controller.joinedContestIds.contains(contest.id);
+                                  final isLive = widget.matchData.status != MatchStatus.upcoming;
+                                  final cannotJoin = isLocked || (isFull && !hasJoined && !isLive);
+
+                                  return GestureDetector(
+                                    onTap: cannotJoin ? null : () {
+                                      if (hasJoined || isLive) {
+                                        Get.to(() => LeaderboardView(contest: contest, match: widget.matchData));
+                                        return;
+                                      }
+                                      if (!controller.isTeamValid) {
+                                        Get.snackbar(
+                                          'Team Required',
+                                          'Please select your 11 players in the Team tab first.',
+                                          snackPosition: SnackPosition.BOTTOM,
+                                          backgroundColor: Colors.orange,
+                                          colorText: Colors.white,
+                                        );
+                                        Get.find<MatchDetailController>().onTabChanged(1);
+                                        return;
+                                      }
+                                      if (controller.rxCaptainId.isEmpty || controller.rxViceCaptainId.isEmpty) {
+                                        Get.snackbar(
+                                          'Captain Required',
+                                          'Please select a Captain & Vice Captain first.',
+                                          snackPosition: SnackPosition.BOTTOM,
+                                          backgroundColor: Colors.orange,
+                                          colorText: Colors.white,
+                                        );
+                                        Get.find<MatchDetailController>().onTabChanged(1);
+                                      } else {
+                                        controller.joinContest(contest.id);
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        hasJoined || isLive ? 'View' : 'Join',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
                                         ),
                                       ),
-                                    ],
+                                    ),
+                                  );
+                                }),
+                                const SizedBox(height: 8),
+                                if (contest.entryFee == 0)
+                                  const Text(
+                                    'Free',
+                                    style: TextStyle(
+                                      color: Color(0xFFF0A500),
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 12,
+                                    ),
                                   )
                                 else
                                   Text(
                                     '₹${contest.entryFee.toInt()}',
                                     style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF0F1923),
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 12,
                                     ),
                                   ),
                               ],
@@ -274,140 +237,104 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                           ],
                         ),
 
-                        const SizedBox(height: 10),
+                        // Spots
+                        Row(
+                          children: [
+                            Icon(Icons.people_alt, size: 14, color: Colors.grey.shade600),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${contest.participantLimit} spots',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 8),
 
-                        // ── Progress bar ──
+                        // Progress bar
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(3),
+                          borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
                             value: fillPercent,
                             backgroundColor: Colors.grey.shade100,
                             valueColor: AlwaysStoppedAnimation<Color>(
                               isFull ? Colors.red.shade400 : AppColors.primary,
                             ),
-                            minHeight: 4,
+                            minHeight: 6,
                           ),
                         ),
 
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
 
-                        // ── Spots row + CTA button ──
+                        // Spots filled + spots left
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              Icons.people_alt_rounded,
-                              size: 13,
-                              color: Colors.grey.shade400,
-                            ),
-                            const SizedBox(width: 4),
                             Text(
-                              isFull
-                                  ? 'Full • ${contest.participantLimit} spots'
-                                  : '${contest.totalParticipants}/${contest.participantLimit} joined',
+                              '${contest.totalParticipants} spots filled',
                               style: TextStyle(
-                                color: isFull ? Colors.red.shade400 : Colors.grey.shade500,
-                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const Spacer(),
-                            Obx(() {
-                              final hasJoined = controller.joinedContestIds.contains(contest.id);
-                              final isLive = widget.matchData.status != MatchStatus.upcoming;
-                              final cannotJoin = isLocked || (isFull && !hasJoined && !isLive);
+                            Text(
+                              '$spotsLeft left',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
 
-                              String label;
-                              Color bgColor;
-                              Color fgColor;
-
-                              if (isLocked) {
-                                label = 'SOON';
-                                bgColor = Colors.grey.shade100;
-                                fgColor = Colors.grey.shade400;
-                              } else if (hasJoined || isLive) {
-                                label = 'LEADERBOARD';
-                                bgColor = AppColors.primary;
-                                fgColor = Colors.white;
-                              } else if (isFull) {
-                                label = 'FULL';
-                                bgColor = Colors.grey.shade100;
-                                fgColor = Colors.grey.shade400;
-                              } else {
-                                label = 'JOIN';
-                                bgColor = AppColors.primary;
-                                fgColor = Colors.white;
-                              }
-
-                              return GestureDetector(
-                                onTap: cannotJoin ? null : () {
-                                  if (hasJoined || isLive) {
-                                    Get.to(() => LeaderboardView(contest: contest, match: widget.matchData));
-                                    return;
-                                  }
-                                  if (!controller.isTeamValid) {
-                                    Get.snackbar(
-                                      'Team Required',
-                                      'Please select your 11 players in the Team tab first.',
-                                      snackPosition: SnackPosition.BOTTOM,
-                                      backgroundColor: Colors.orange,
-                                      colorText: Colors.white,
-                                    );
-                                    Get.find<MatchDetailController>().onTabChanged(1);
-                                    return;
-                                  }
-                                  if (controller.rxCaptainId.isEmpty || controller.rxViceCaptainId.isEmpty) {
-                                    Get.snackbar(
-                                      'Captain Required',
-                                      'Please select a Captain & Vice Captain first.',
-                                      snackPosition: SnackPosition.BOTTOM,
-                                      backgroundColor: Colors.orange,
-                                      colorText: Colors.white,
-                                    );
-                                    Get.find<MatchDetailController>().onTabChanged(1);
-                                  } else {
-                                    controller.joinContest(contest.id);
-                                  }
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-                                  decoration: BoxDecoration(
-                                    color: bgColor,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: cannotJoin
-                                        ? Border.all(color: Colors.grey.shade200)
-                                        : null,
-                                    boxShadow: cannotJoin
-                                        ? null
-                                        : [
-                                            BoxShadow(
-                                              color: AppColors.primary.withValues(alpha: 0.25),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ],
-                                  ),
-                                  child: controller.isJoining.value && label == 'JOIN'
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : Text(
-                                          label,
-                                          style: TextStyle(
-                                            color: fgColor,
-                                            fontWeight: FontWeight.w900,
-                                            fontSize: 11,
-                                            letterSpacing: 0.5,
-                                          ),
-                                        ),
-                                ),
-                              );
-                            }),
+                  // Footer
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Text('🏆', style: TextStyle(fontSize: 12)),
+                            const SizedBox(width: 6),
+                            Text(
+                              '1st Prize: ₹${contest.firstPrize.toInt()}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Icon(Icons.check_circle, size: 14, color: Colors.white),
+                            const SizedBox(width: 4),
+                            const Text(
+                              '100% Guaranteed prize',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 10,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -423,6 +350,7 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
   }
 
   void _showPrizePoolBreakdown(BuildContext context, ContestModel contest) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -433,7 +361,12 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            bottomPadding > 0 ? bottomPadding + 12 : 24,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +384,7 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close, color: Colors.grey.shade600),
+                    icon: Icon(Icons.cancel, size: 24, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -471,7 +404,7 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                     padding: const EdgeInsets.symmetric(vertical: 32.0),
                     child: Column(
                       children: [
-                        Icon(Icons.emoji_events_outlined, size: 48, color: Colors.grey.shade300),
+                        Icon(Icons.military_tech, size: 48, color: Colors.grey.shade300),
                         const SizedBox(height: 12),
                         Text(
                           'No prize distribution breakdown configured.',
@@ -499,16 +432,16 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                         children: [
                           TableRow(
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
+                              color: AppColors.primary.withValues(alpha: 0.08),
                             ),
-                            children: const [
+                            children: [
                               Padding(
-                                padding: EdgeInsets.all(12.0),
-                                child: Text('RANK', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Color(0xFF6B7280))),
+                                padding: const EdgeInsets.all(12.0),
+                                child: Text('RANK', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: AppColors.primary)),
                               ),
                               Padding(
-                                padding: EdgeInsets.all(12.0),
-                                child: Text('PRIZE AMOUNT', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Color(0xFF6B7280)), textAlign: TextAlign.right),
+                                padding: const EdgeInsets.all(12.0),
+                                child: Text('WINNINGS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: AppColors.primary), textAlign: TextAlign.right),
                               ),
                             ],
                           ),
@@ -528,7 +461,7 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                                   child: Row(
                                     children: [
                                       if (isFirst) ...[
-                                        const Icon(Icons.emoji_events, size: 16, color: Color(0xFFD4AF37)),
+                                        const Text('🏆', style: TextStyle(fontSize: 14)),
                                         const SizedBox(width: 6),
                                       ],
                                       Text(
@@ -570,154 +503,3 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
     );
   }
 }
-
-// ----- OLD IMPLEMENTATION COMMENTED OUT -----
-/*
-class ContestListView extends StatefulWidget {
-  final MatchData matchData;
-  const ContestListView({Key? key, required this.matchData}) : super(key: key);
-
-  @override
-  State<ContestListView> createState() => _ContestListViewState();
-}
-
-class _ContestListViewState extends State<ContestListView> {
-  late ContestController controller;
-
-  @override
-  void initState() {
-    super.initState();
-    if (!Get.isRegistered<ContestController>()) {
-      Get.put(ContestController());
-    }
-    controller = Get.find<ContestController>();
-    controller.setupForMatch(widget.matchData);
-    if (widget.matchData.id != null) {
-      controller.fetchContests(widget.matchData.id!);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Contests'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: Obx(() {
-        if (controller.isLoading.value && controller.contests.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (controller.contests.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.sports_cricket, size: 64, color: Colors.grey.shade400),
-                SizedBox(height: 16),
-                Text('No contests available for this match currently.', 
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 16)
-                ),
-              ],
-            ),
-          );
-        }
-
-        return ListView.builder(
-          padding: EdgeInsets.all(16),
-          itemCount: controller.contests.length,
-          itemBuilder: (context, index) {
-            final contest = controller.contests[index];
-            return Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(contest.name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade100,
-                            borderRadius: BorderRadius.circular(4)
-                          ),
-                          child: Text(contest.status, style: TextStyle(color: Colors.blue.shade800, fontSize: 12, fontWeight: FontWeight.bold)),
-                        )
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Prize Pool', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                            Text('₹${contest.firstPrize}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green.shade700)),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text('Entry', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                            Text('₹${contest.entryFee}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
-                          ],
-                        )
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    Divider(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.people, size: 16, color: Colors.grey.shade600),
-                            SizedBox(width: 4),
-                            Text('${contest.totalParticipants} Joined', style: TextStyle(color: Colors.grey.shade600)),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                             TextButton(
-                              onPressed: () {
-                                Get.to(() => LeaderboardView(contest: contest, match: widget.matchData));
-                              },
-                              child: Text('Leaderboard')
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                controller.resetTeam();
-                                Get.to(() => TeamCreationView(
-                                    matchData: widget.matchData,
-                                    contest: contest));
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
-                              ),
-                              child: Text('Join')
-                            )
-                          ],
-                        )
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      }),
-    );
-  }
-}
-*/

@@ -7,7 +7,17 @@ import 'package:ok11/app/services/api_service.dart';
 class SiteContentRepository {
   final _apiService = Get.find<ApiService>();
 
+  // In-memory cache to prevent loading spinners on subsequent page visits
+  static AboutContent? _cachedAbout;
+  static PointsContent? _cachedPoints;
+  static TermsContent? _cachedTerms;
+  static List<FAQItem>? _cachedFAQs;
+
   Future<AboutContent> getAboutContent() async {
+    if (_cachedAbout != null) {
+      debugPrint('💾 SiteContentRepository: Returning About content from cache');
+      return _cachedAbout!;
+    }
     debugPrint('📥 SiteContentRepository.getAboutContent()');
     try {
       final response = await _apiService.get('/site-content/about');
@@ -18,11 +28,13 @@ class SiteContentRepository {
         if (json != null) {
           final data = json['data'] as Map<String, dynamic>?;
           if (data != null) {
-            return AboutContent.fromJson(data);
+            _cachedAbout = AboutContent.fromJson(data);
+            return _cachedAbout!;
           }
         }
         debugPrint('✅ SiteContentRepository.getAboutContent: Success');
-        return AboutContent(content: null, links: []);
+        _cachedAbout = AboutContent(content: null, links: []);
+        return _cachedAbout!;
       } else {
         debugPrint(
           '❌ SiteContentRepository.getAboutContent: Status ${response.statusCode}',
@@ -36,6 +48,10 @@ class SiteContentRepository {
   }
 
   Future<PointsContent> getPointsContent() async {
+    if (_cachedPoints != null) {
+      debugPrint('💾 SiteContentRepository: Returning Points content from cache');
+      return _cachedPoints!;
+    }
     debugPrint('📥 SiteContentRepository.getPointsContent()');
     try {
       final response = await _apiService.get('/site-content/points');
@@ -46,11 +62,13 @@ class SiteContentRepository {
         if (json != null) {
           final data = json['data'] as Map<String, dynamic>?;
           if (data != null) {
-            return PointsContent.fromJson(data);
+            _cachedPoints = PointsContent.fromJson(data);
+            return _cachedPoints!;
           }
         }
         debugPrint('✅ SiteContentRepository.getPointsContent: Success');
-        return PointsContent(content: null, items: []);
+        _cachedPoints = PointsContent(content: null, items: []);
+        return _cachedPoints!;
       } else {
         debugPrint(
           '❌ SiteContentRepository.getPointsContent: Status ${response.statusCode}',
@@ -64,6 +82,10 @@ class SiteContentRepository {
   }
 
   Future<TermsContent> getTermsContent() async {
+    if (_cachedTerms != null) {
+      debugPrint('💾 SiteContentRepository: Returning Terms content from cache');
+      return _cachedTerms!;
+    }
     debugPrint('📥 SiteContentRepository.getTermsContent()');
     try {
       final response = await _apiService.get('/site-content/terms');
@@ -74,11 +96,13 @@ class SiteContentRepository {
         if (json != null) {
           final data = json['data'] as Map<String, dynamic>?;
           if (data != null) {
-            return TermsContent.fromJson(data);
+            _cachedTerms = TermsContent.fromJson(data);
+            return _cachedTerms!;
           }
         }
         debugPrint('✅ SiteContentRepository.getTermsContent: Success');
-        return TermsContent(content: null, items: []);
+        _cachedTerms = TermsContent(content: null, items: []);
+        return _cachedTerms!;
       } else {
         debugPrint(
           '❌ SiteContentRepository.getTermsContent: Status ${response.statusCode}',
@@ -92,6 +116,10 @@ class SiteContentRepository {
   }
 
   Future<List<FAQItem>> getFAQs() async {
+    if (_cachedFAQs != null) {
+      debugPrint('💾 SiteContentRepository: Returning FAQs from cache');
+      return _cachedFAQs!;
+    }
     debugPrint('📥 SiteContentRepository.getFAQs()');
     try {
       final response = await _apiService.get('/faqs');
@@ -111,11 +139,13 @@ class SiteContentRepository {
             debugPrint(
               '✅ SiteContentRepository.getFAQs: ${result.length} FAQs',
             );
-            return result;
+            _cachedFAQs = result;
+            return _cachedFAQs!;
           }
         }
         debugPrint('✅ SiteContentRepository.getFAQs: 0 FAQs (empty)');
-        return [];
+        _cachedFAQs = [];
+        return _cachedFAQs!;
       } else {
         debugPrint(
           '❌ SiteContentRepository.getFAQs: Status ${response.statusCode}',

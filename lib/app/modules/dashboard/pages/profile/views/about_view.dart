@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:unicons/unicons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ok11/app/modules/dashboard/pages/profile/controllers/about_controller.dart';
 import 'package:ok11/app/theme/app_colors.dart';
@@ -17,7 +18,10 @@ class AboutView extends GetView<AboutController> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,
+            color: Colors.white,
+            size: 24,
+          ),
           onPressed: () => Get.back(),
         ),
         title: const Text('About'),
@@ -26,7 +30,7 @@ class AboutView extends GetView<AboutController> {
       body: SafeArea(
         child: Obx(
           () => controller.isLoading.value
-              ? const AboutShimmer()
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -80,25 +84,25 @@ class AboutView extends GetView<AboutController> {
                                 height: 80,
                               ),
                             ),
-                            if (controller.aboutContent.value?.content !=
-                                    null &&
-                                controller
-                                    .aboutContent
-                                    .value!
-                                    .content!
-                                    .isNotEmpty) ...[
-                              const SizedBox(height: 24),
-                              Text(
-                                HtmlUtils.stripHtmlTags(
-                                  controller.aboutContent.value!.content!,
-                                ),
-                                style: AppTextStyles.body1.copyWith(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 16,
-                                  height: 1.6,
-                                ),
-                                textAlign: TextAlign.justify,
-                              ),
+                            if (controller.aboutContent.value?.content != null) ...[
+                              (() {
+                                final stripped = HtmlUtils.stripHtmlTags(controller.aboutContent.value!.content!);
+                                if (stripped.isEmpty) return const SizedBox.shrink();
+                                return Column(
+                                  children: [
+                                    const SizedBox(height: 24),
+                                    Text(
+                                      stripped,
+                                      style: AppTextStyles.body1.copyWith(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 16,
+                                        height: 1.6,
+                                      ),
+                                      textAlign: TextAlign.justify,
+                                    ),
+                                  ],
+                                );
+                              })(),
                             ],
                           ],
                         ),
@@ -132,11 +136,11 @@ class AboutView extends GetView<AboutController> {
                                 AppColors.accentOrange,
                               ];
                               final icons = [
-                                Icons.camera_alt_rounded,
-                                Icons.business_rounded,
-                                Icons.link_rounded,
-                                Icons.public_rounded,
-                                Icons.share_rounded,
+                                Icons.camera_alt,
+                                UniconsLine.estate,
+                                UniconsLine.link,
+                                Icons.public,
+                                Icons.share,
                               ];
                               return Padding(
                                 padding: EdgeInsets.only(
@@ -169,8 +173,7 @@ class AboutView extends GetView<AboutController> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.favorite_rounded,
+                              Icon(Icons.favorite,
                                 color: AppColors.accentPink,
                                 size: 18,
                               ),
@@ -197,8 +200,7 @@ class AboutView extends GetView<AboutController> {
                         Center(
                           child: Column(
                             children: [
-                              Icon(
-                                Icons.info_outline_rounded,
+                              Icon(Icons.info,
                                 size: 48,
                                 color: AppColors.textSecondary.withValues(
                                   alpha: 0.5,
@@ -305,8 +307,7 @@ class AboutView extends GetView<AboutController> {
                   ],
                 ),
               ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
+              Icon(Icons.arrow_forward,
                 color: AppColors.textSecondary,
                 size: 16,
               ),

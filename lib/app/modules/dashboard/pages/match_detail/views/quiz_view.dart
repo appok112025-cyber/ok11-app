@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:ok11/app/modules/dashboard/pages/match_detail/controllers/match_detail_controller.dart';
 import 'package:ok11/app/theme/app_colors.dart';
 import 'package:ok11/app/theme/app_text_styles.dart';
@@ -112,8 +113,7 @@ class QuizView extends GetView<MatchDetailController> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.quiz_rounded,
+                child: const Icon(Icons.help,
                   color: Colors.white,
                   size: 24,
                 ),
@@ -269,8 +269,7 @@ class QuizView extends GetView<MatchDetailController> {
                         color: AppColors.accentGreen,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.check_rounded,
+                      child: const Icon(Icons.check_circle,
                         color: Colors.white,
                         size: 16,
                       ),
@@ -373,8 +372,7 @@ class QuizView extends GetView<MatchDetailController> {
                       ),
                     ),
                     child: isSelected
-                        ? const Icon(
-                            Icons.check_rounded,
+                        ? const Icon(Icons.check_circle,
                             color: AppColors.primary,
                             size: 16,
                           )

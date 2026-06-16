@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:ok11/app/theme/app_colors.dart';
-import 'package:ok11/app/theme/app_text_styles.dart';
 
 class TabBarWidget extends StatelessWidget {
   final RxInt selectedTab;
   final List<String> tabs;
-  final List<IconData>? icons;
+  final List<dynamic>? icons;
   final Function(int) onTabChanged;
   final Color? badgeColor;
   final Color? badgeBorderColor;
@@ -27,18 +27,11 @@ class TabBarWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-            spreadRadius: 0,
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -48,18 +41,18 @@ class TabBarWidget extends StatelessWidget {
             children: [
               Obx(
                 () => AnimatedPositioned(
-                  duration: const Duration(milliseconds: 300),
+                  duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOutCubic,
-                  left: tabWidth * selectedTab.value + 4,
-                  top: 4,
-                  bottom: 4,
+                  left: tabWidth * selectedTab.value + 2,
+                  top: 2,
+                  bottom: 2,
                   child: Container(
-                    width: tabWidth - 8,
+                    width: tabWidth - 4,
                     decoration: BoxDecoration(
                       color: badgeColor ?? AppColors.primary,
                       borderRadius: BorderRadius.circular(12),
                       border: badgeBorderColor != null
-                          ? Border.all(color: badgeBorderColor!, width: 1.5)
+                          ? Border.all(color: badgeBorderColor!, width: 1.2)
                           : null,
                     ),
                   ),
@@ -108,15 +101,14 @@ class TabBarWidget extends StatelessWidget {
                   if (icons != null && icons!.length > index) ...[
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 200),
-                      child: Icon(
-                        isEnabled ? icons![index] : Icons.lock_outline_rounded,
+                      child: Icon(isEnabled ? (icons![index] as IconData) : Icons.lock,
                         key: ValueKey('icon_${index}_$isSelected$isEnabled'),
                         size: 18,
                         color: isSelected
                             ? Colors.white
                             : isEnabled
-                            ? AppColors.textSecondary
-                            : AppColors.textSecondary.withValues(alpha: 0.4),
+                            ? const Color(0xFF374151)
+                            : const Color(0xFF9CA3AF),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -137,20 +129,20 @@ class TabBarWidget extends StatelessWidget {
                       child: AnimatedDefaultTextStyle(
                         duration: const Duration(milliseconds: 200),
                         curve: Curves.easeInOut,
-                        style: AppTextStyles.body2.copyWith(
+                        style: TextStyle(
                           color: isSelected
                               ? Colors.white
                               : isEnabled
-                              ? AppColors.textSecondary
-                              : AppColors.textSecondary.withValues(alpha: 0.4),
+                              ? const Color(0xFF374151)
+                              : const Color(0xFF9CA3AF),
                           fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          fontSize: 12, // Reduced slightly from 13
-                          letterSpacing: 0.5,
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          fontSize: 14.5,
+                          letterSpacing: 0.2,
                         ),
                         child: Text(
-                          label.toUpperCase(),
+                          label[0].toUpperCase() + label.substring(1),
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

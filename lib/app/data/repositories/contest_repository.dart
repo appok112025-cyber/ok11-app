@@ -104,7 +104,9 @@ class ContestRepository {
       requestHeaders['Pragma'] = 'no-cache';
       requestHeaders['Expires'] = '0';
 
-      final response = await http.get(url, headers: requestHeaders);
+      final response = await http
+          .get(url, headers: requestHeaders)
+          .timeout(const Duration(seconds: 7));
       
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);

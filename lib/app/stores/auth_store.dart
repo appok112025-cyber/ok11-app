@@ -208,12 +208,13 @@ class AuthStore extends GetxController {
           final error = decoded is Map
               ? Map<String, dynamic>.from(decoded)
               : null;
-          final message = error?['message'] as String? ?? 'Failed to get user';
+          final message = error?['message'] as String? ?? 'Failed to get user (Status: ${response.statusCode}, Body: ${response.body})';
           errorMessage.value = message;
           throw Exception(message);
         } catch (e) {
-          errorMessage.value = 'Failed to get user';
-          throw Exception('Failed to get user');
+          final fallbackMsg = 'Failed to get user (Status: ${response.statusCode}, Body: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)})';
+          errorMessage.value = fallbackMsg;
+          throw Exception(fallbackMsg);
         }
       }
     } catch (e) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:ok11/app/modules/dashboard/pages/profile/controllers/faq_controller.dart';
 import 'package:ok11/app/theme/app_colors.dart';
 import 'package:ok11/app/theme/app_text_styles.dart';
@@ -14,7 +15,10 @@ class FaqView extends GetView<FaqController> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,
+            color: Colors.white,
+            size: 24,
+          ),
           onPressed: () => Get.back(),
         ),
         title: const Text('FAQ'),
@@ -23,14 +27,13 @@ class FaqView extends GetView<FaqController> {
       body: SafeArea(
         child: Obx(
           () => controller.isLoading.value
-              ? const FaqShimmer()
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
               : controller.faqs.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.help_outline_rounded,
+                      Icon(Icons.help,
                         size: 64,
                         color: AppColors.textSecondary.withValues(alpha: 0.5),
                       ),
@@ -91,8 +94,7 @@ class FaqView extends GetView<FaqController> {
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(
-                                Icons.help_outline_rounded,
+                              child: const Icon(Icons.help,
                                 color: Colors.white,
                                 size: 28,
                               ),
@@ -133,12 +135,12 @@ class FaqView extends GetView<FaqController> {
                               AppColors.accentYellow,
                             ];
                             final icons = [
-                              Icons.sports_cricket_rounded,
-                              Icons.money_off_rounded,
-                              Icons.emoji_events_rounded,
-                              Icons.quiz_rounded,
-                              Icons.info_rounded,
-                              Icons.help_rounded,
+                              Icons.play_arrow,
+                              Icons.receipt_long,
+                              Icons.military_tech,
+                              Icons.help,
+                              Icons.info,
+                              Icons.help,
                             ];
                             return Padding(
                               padding: EdgeInsets.only(

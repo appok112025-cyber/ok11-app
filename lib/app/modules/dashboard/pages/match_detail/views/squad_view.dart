@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:unicons/unicons.dart';
 import 'package:ok11/app/data/models/match_data.dart';
 import 'package:ok11/app/modules/dashboard/pages/match_detail/controllers/match_detail_controller.dart';
 import 'package:ok11/app/theme/app_colors.dart';
@@ -102,8 +103,7 @@ class SquadView extends GetView<MatchDetailController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  isComplete ? Icons.check_circle : Icons.people_alt_outlined,
+                Icon(isComplete ? Icons.check_circle : Icons.people_alt,
                   size: 20,
                   color: Colors.white,
                 ),
@@ -208,8 +208,7 @@ class SquadView extends GetView<MatchDetailController> {
                           color: AppColors.primaryLighter,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          Icons.flag_outlined,
+                        child: Icon(UniconsLine.bookmark,
                           size: 16,
                           color: AppColors.textSecondary,
                         ),
@@ -242,8 +241,7 @@ class SquadView extends GetView<MatchDetailController> {
                     color: AppColors.primaryLighter,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.flag_outlined,
+                  child: Icon(UniconsLine.bookmark,
                     size: 16,
                     color: AppColors.textSecondary,
                   ),
@@ -376,8 +374,7 @@ class SquadView extends GetView<MatchDetailController> {
                                           color: AppColors.primary,
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(
-                                          Icons.check,
+                                        child: const Icon(Icons.check_circle,
                                           color: Colors.white,
                                           size: 16,
                                         ),

@@ -1,10 +1,13 @@
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ok11/app/data/models/contest_model.dart';
 import 'package:ok11/app/data/models/match_data.dart';
 import 'package:ok11/app/data/repositories/contest_repository.dart';
 import 'package:ok11/app/stores/auth_store.dart';
 import 'package:ok11/app/utils/player_utils.dart';
+import 'package:ok11/app/widgets/common/app_snackbars.dart';
 
 class ContestController extends GetxController {
   final ContestRepository repo = ContestRepository();
@@ -34,6 +37,8 @@ class ContestController extends GetxController {
   // Track team origin for max-7-per-team constraint
   String _team1Name = '';
   String _team2Name = '';
+  String? _matchId;
+  String? _lastLeaderboardContestId;
 
   // ── Computed getters ────────────────────────────────────────────
 
@@ -83,8 +88,9 @@ class ContestController extends GetxController {
 
   void setupForMatch(MatchData matchData) {
     // Only reset state if switching to a DIFFERENT match
-    final isNewMatch = _team1Name.isEmpty || (_team1Name != matchData.team1 && _team2Name != matchData.team2);
+    final isNewMatch = _matchId == null || _matchId != matchData.id;
     
+    _matchId = matchData.id;
     _team1Name = matchData.team1;
     _team2Name = matchData.team2;
     allPlayerInfo.value = PlayerUtils.buildPlayerInfoList(
@@ -102,6 +108,10 @@ class ContestController extends GetxController {
       isEditing.value = false;
       joinedContestIds.clear();
       leaderboard.clear();
+      
+      if (_matchId != null) {
+        loadSquadLocally(_matchId!);
+      }
     }
   }
 
@@ -142,8 +152,13 @@ class ContestController extends GetxController {
   }
 
   void fetchLeaderboard(String contestId) async {
+    final isNewContest = _lastLeaderboardContestId != contestId;
+    _lastLeaderboardContestId = contestId;
+
     isLoading.value = true;
-    leaderboard.clear();
+    if (isNewContest) {
+      leaderboard.clear();
+    }
     try {
       final data = await repo.getLeaderboard(contestId);
       leaderboard.value = data;
@@ -191,6 +206,7 @@ class ContestController extends GetxController {
       }
       selectedPlayers.add(info.id);
     }
+    if (_matchId != null) saveSquadLocally(_matchId!);
   }
 
   /// Whether the squad is complete (11 players).
@@ -204,12 +220,14 @@ class ContestController extends GetxController {
     if (rxViceCaptainId.value == playerId) rxViceCaptainId.value = '';
     rxCaptainId.value =
         rxCaptainId.value == playerId ? '' : playerId;
+    if (_matchId != null) saveSquadLocally(_matchId!);
   }
 
   void setViceCaptain(String playerId) {
     if (rxCaptainId.value == playerId) rxCaptainId.value = '';
     rxViceCaptainId.value =
         rxViceCaptainId.value == playerId ? '' : playerId;
+    if (_matchId != null) saveSquadLocally(_matchId!);
   }
 
   // ── Join ─────────────────────────────────────────────────────────
@@ -224,8 +242,7 @@ class ContestController extends GetxController {
       return false;
     }
     if (rxCaptainId.value.isEmpty || rxViceCaptainId.value.isEmpty) {
-      Get.snackbar('Missing Selection', 'Please assign Captain and Vice Captain.',
-          snackPosition: SnackPosition.BOTTOM);
+      AppSnackbars.showError('Please assign Captain and Vice Captain.');
       return false;
     }
 
@@ -241,14 +258,10 @@ class ContestController extends GetxController {
 
     if (success) {
       joinedContestIds.add(contestId);
-      Get.snackbar('🎉 Joined!', 'Successfully joined the contest.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.shade700,
-          colorText: Colors.white);
+      AppSnackbars.showSuccess('Successfully joined the contest.');
       return true;
     } else {
-      Get.snackbar('Error', 'Failed to join contest. Please try again.',
-          snackPosition: SnackPosition.BOTTOM);
+      AppSnackbars.showError('Failed to join contest. Please try again.');
       return false;
     }
   }
@@ -258,5 +271,40 @@ class ContestController extends GetxController {
     rxCaptainId.value = '';
     rxViceCaptainId.value = '';
     activeRoleFilter.value = null;
+    if (_matchId != null) saveSquadLocally(_matchId!);
+  }
+
+  Future<void> saveSquadLocally(String matchId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = {
+        'players': selectedPlayers.toList(),
+        'captainId': rxCaptainId.value,
+        'viceCaptainId': rxViceCaptainId.value,
+      };
+      await prefs.setString('squad_for_match_$matchId', jsonEncode(data));
+      debugPrint('💾 Saved squad locally for match $matchId');
+    } catch (e) {
+      debugPrint('🚨 Error saving squad locally: $e');
+    }
+  }
+
+  Future<void> loadSquadLocally(String matchId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedStr = prefs.getString('squad_for_match_$matchId');
+      if (savedStr != null) {
+        final Map<String, dynamic> decoded = jsonDecode(savedStr);
+        final List<dynamic>? playersList = decoded['players'];
+        if (playersList != null && playersList.isNotEmpty) {
+          selectedPlayers.assignAll(playersList.map((p) => p.toString()).toList());
+        }
+        rxCaptainId.value = decoded['captainId']?.toString() ?? '';
+        rxViceCaptainId.value = decoded['viceCaptainId']?.toString() ?? '';
+        debugPrint('💾 Loaded squad locally for match $matchId: ${selectedPlayers.length} players');
+      }
+    } catch (e) {
+      debugPrint('🚨 Error loading squad locally: $e');
+    }
   }
 }
