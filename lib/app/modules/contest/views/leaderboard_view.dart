@@ -800,9 +800,6 @@ class _LeaderboardViewState extends State<LeaderboardView> {
             PrizeRange(fromRank: 1, toRank: 1, prizeAmount: contest.firstPrize),
           ];
 
-    // Trophy emojis for top 3
-    const trophies = ['🏆', '🥈', '🥉'];
-
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -848,13 +845,11 @@ class _LeaderboardViewState extends State<LeaderboardView> {
               ),
               // Data rows
               ...effectiveBreakdown.asMap().entries.map((entry) {
-                final idx = entry.key;
                 final range = entry.value;
                 final isFirst = range.fromRank == 1 && range.toRank == 1;
                 final rankText = range.fromRank == range.toRank
                     ? 'Rank ${range.fromRank}'
                     : 'Rank ${range.fromRank} - ${range.toRank}';
-                final trophy = idx < trophies.length ? trophies[idx] : '';
 
                 return TableRow(
                   decoration: BoxDecoration(
@@ -866,10 +861,6 @@ class _LeaderboardViewState extends State<LeaderboardView> {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                       child: Row(
                         children: [
-                          if (trophy.isNotEmpty) ...[
-                            Text(trophy, style: const TextStyle(fontSize: 18)),
-                            const SizedBox(width: 10),
-                          ],
                           Text(
                             rankText,
                             style: const TextStyle(

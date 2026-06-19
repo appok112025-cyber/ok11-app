@@ -1,3 +1,5 @@
+
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -25,7 +27,6 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
   @override
   void initState() {
     super.initState();
-    // Initialize controller immediately to avoid LateInitializationError during build
     if (!Get.isRegistered<ContestController>()) {
       Get.put(ContestController());
     }
@@ -60,12 +61,12 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                 child: const Icon(Icons.play_arrow, size: 48, color: AppColors.primary),
               ),
               const SizedBox(height: 16),
-              Text('No contests available', 
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)
+              Text('No contests available',
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 6),
-              Text('Check back later for new contests', 
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)
+              Text('Check back later for new contests',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
             ],
           ),
@@ -79,42 +80,38 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
           final contest = controller.contests[index];
           final isLocked = contest.isLocked;
 
-          final spotsLeft = (contest.participantLimit - contest.totalParticipants).clamp(0, contest.participantLimit);
+          final spotsLeft = (contest.participantLimit - contest.totalParticipants)
+              .clamp(0, contest.participantLimit);
           final fillPercent = contest.participantLimit > 0
               ? (contest.totalParticipants / contest.participantLimit).clamp(0.0, 1.0)
               : 0.0;
           final isFull = spotsLeft <= 0;
 
-          return GestureDetector(
-            onTap: isLocked ? () {
-              Get.snackbar('Coming Soon', 'This contest will open soon!',
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: AppColors.primary,
-                colorText: Colors.white,
-                borderRadius: 12,
-                margin: const EdgeInsets.all(16),
-              );
-            } : null,
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isLocked ? AppColors.accentGold.withValues(alpha: 0.5) : Colors.grey.shade200,
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+          // Build the base card widget
+          final Widget cardBody = Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isLocked
+                    ? const Color(0xFFD4AF37)
+                    : Colors.grey.shade200,
+                width: isLocked ? 3.0 : 1.0,
+                strokeAlign: BorderSide.strokeAlignOutside,
               ),
-              child: Column(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // ── Card Body ──────────────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: Column(
@@ -130,12 +127,13 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        
-                        // Prize Pool and Join button row
+
+                        // Prize Pool + Join/View button row
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Prize Pool
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -149,7 +147,7 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '₹${contest.firstPrize.toInt()}', // Simplified for design
+                                  '₹${contest.firstPrize.toInt()}',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w900,
@@ -158,46 +156,60 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                                 ),
                               ],
                             ),
+
+                            // Join / View button + entry fee
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Obx(() {
-                                  final hasJoined = controller.joinedContestIds.contains(contest.id);
-                                  final isLive = widget.matchData.status != MatchStatus.upcoming;
-                                  final cannotJoin = isLocked || (isFull && !hasJoined && !isLive);
+                                  final hasJoined =
+                                      controller.joinedContestIds.contains(contest.id);
+                                  final isLive =
+                                      widget.matchData.status != MatchStatus.upcoming;
+                                  final cannotJoin =
+                                      isLocked || (isFull && !hasJoined && !isLive);
 
                                   return GestureDetector(
-                                    onTap: cannotJoin ? null : () {
-                                      if (hasJoined || isLive) {
-                                        Get.to(() => LeaderboardView(contest: contest, match: widget.matchData));
-                                        return;
-                                      }
-                                      if (!controller.isTeamValid) {
-                                        Get.snackbar(
-                                          'Team Required',
-                                          'Please select your 11 players in the Team tab first.',
-                                          snackPosition: SnackPosition.BOTTOM,
-                                          backgroundColor: Colors.orange,
-                                          colorText: Colors.white,
-                                        );
-                                        Get.find<MatchDetailController>().onTabChanged(1);
-                                        return;
-                                      }
-                                      if (controller.rxCaptainId.isEmpty || controller.rxViceCaptainId.isEmpty) {
-                                        Get.snackbar(
-                                          'Captain Required',
-                                          'Please select a Captain & Vice Captain first.',
-                                          snackPosition: SnackPosition.BOTTOM,
-                                          backgroundColor: Colors.orange,
-                                          colorText: Colors.white,
-                                        );
-                                        Get.find<MatchDetailController>().onTabChanged(1);
-                                      } else {
-                                        controller.joinContest(contest.id);
-                                      }
-                                    },
+                                    onTap: cannotJoin
+                                        ? null
+                                        : () {
+                                            if (hasJoined || isLive) {
+                                              Get.to(() => LeaderboardView(
+                                                    contest: contest,
+                                                    match: widget.matchData,
+                                                  ));
+                                              return;
+                                            }
+                                            if (!controller.isTeamValid) {
+                                              Get.snackbar(
+                                                'Team Required',
+                                                'Please select your 11 players in the Team tab first.',
+                                                snackPosition: SnackPosition.BOTTOM,
+                                                backgroundColor: Colors.orange,
+                                                colorText: Colors.white,
+                                              );
+                                              Get.find<MatchDetailController>()
+                                                  .onTabChanged(1);
+                                              return;
+                                            }
+                                            if (controller.rxCaptainId.isEmpty ||
+                                                controller.rxViceCaptainId.isEmpty) {
+                                              Get.snackbar(
+                                                'Captain Required',
+                                                'Please select a Captain & Vice Captain first.',
+                                                snackPosition: SnackPosition.BOTTOM,
+                                                backgroundColor: Colors.orange,
+                                                colorText: Colors.white,
+                                              );
+                                              Get.find<MatchDetailController>()
+                                                  .onTabChanged(1);
+                                            } else {
+                                              controller.joinContest(contest.id);
+                                            }
+                                          },
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 18, vertical: 7),
                                       decoration: BoxDecoration(
                                         color: AppColors.primary,
                                         borderRadius: BorderRadius.circular(8),
@@ -237,10 +249,11 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                           ],
                         ),
 
-                        // Spots
+                        // Spots count
                         Row(
                           children: [
-                            Icon(Icons.people_alt, size: 14, color: Colors.grey.shade600),
+                            Icon(Icons.people_alt,
+                                size: 14, color: Colors.grey.shade600),
                             const SizedBox(width: 4),
                             Text(
                               '${contest.participantLimit} spots',
@@ -252,7 +265,7 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 8),
 
                         // Progress bar
@@ -270,7 +283,7 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
 
                         const SizedBox(height: 8),
 
-                        // Spots filled + spots left
+                        // Spots filled / left
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -296,38 +309,21 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                     ),
                   ),
 
-                  // Footer
+                  // ── Footer ────────────────────────────────────────────
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(12),
-                        bottomRight: Radius.circular(12),
-                      ),
-                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    color: AppColors.primary,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
+                        // Left: guaranteed prize badge
+                        const Row(
                           children: [
-                            const Text('🏆', style: TextStyle(fontSize: 12)),
-                            const SizedBox(width: 6),
+                            Icon(Icons.check_circle,
+                                size: 14, color: Colors.white),
+                            SizedBox(width: 4),
                             Text(
-                              '1st Prize: ₹${contest.firstPrize.toInt()}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.check_circle, size: 14, color: Colors.white),
-                            const SizedBox(width: 4),
-                            const Text(
                               '100% Guaranteed prize',
                               style: TextStyle(
                                 color: Colors.white,
@@ -337,11 +333,104 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                             ),
                           ],
                         ),
+
+                        // Right: Prize Distribution info button
+                        GestureDetector(
+                          onTap: () =>
+                              _showPrizePoolBreakdown(context, contest),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.info_outline,
+                                  size: 14, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text(
+                                'Prize Distribution',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
+            );
+            
+
+          // ── Non-locked: return card as-is ─────────────────────────────
+          if (!isLocked) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: cardBody,
+            );
+          }
+
+          // ── Locked: card + centred gold-green lock icon ───────────────
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Stack(
+              children: [
+                cardBody,
+
+                // Subtle blur over the locked card body
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
+                      child: Container(
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Centred gold lock icon inspired by AR Arena play button
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFFFFB800).withValues(alpha: 0.2),
+                          border: Border.all(
+                            color: const Color(0xFFFFB800).withValues(alpha: 0.6),
+                            width: 2.0,
+                          ),
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFFFFB800),
+                          ),
+                          child: const Icon(
+                            Icons.lock_rounded,
+                            color: Colors.white,
+                            size: 26,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Tap handler for locked state - showing premium dialog
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: () {
+                      _showPremiumLockedDialog(context, contest);
+                    },
+                    child: Container(color: Colors.transparent),
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -384,7 +473,8 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.cancel, size: 24, color: Colors.grey.shade600),
+                    icon: Icon(Icons.cancel,
+                        size: 24, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -398,105 +488,284 @@ class _ContestListViewFragmentState extends State<ContestListViewFragment> {
                 ),
               ),
               const SizedBox(height: 20),
-              if (contest.prizeBreakdown == null || contest.prizeBreakdown!.isEmpty)
+              if (contest.prizeBreakdown == null ||
+                  contest.prizeBreakdown!.isEmpty)
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 32.0),
                     child: Column(
                       children: [
-                        Icon(Icons.military_tech, size: 48, color: Colors.grey.shade300),
+                        Icon(Icons.military_tech,
+                            size: 48, color: Colors.grey.shade300),
                         const SizedBox(height: 12),
                         Text(
                           'No prize distribution breakdown configured.',
-                          style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontStyle: FontStyle.italic),
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 13,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 )
-              else
-                ...[
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade100),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Table(
-                        columnWidths: const {
-                          0: FlexColumnWidth(1),
-                          1: FlexColumnWidth(1),
-                        },
-                        children: [
-                          TableRow(
+              else ...[
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade100),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Table(
+                      columnWidths: const {
+                        0: FlexColumnWidth(1),
+                        1: FlexColumnWidth(1),
+                      },
+                      children: [
+                        TableRow(
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                          ),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Text('RANK',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 11,
+                                      color: AppColors.primary)),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Text('WINNINGS',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 11,
+                                      color: AppColors.primary),
+                                  textAlign: TextAlign.right),
+                            ),
+                          ],
+                        ),
+                        ...contest.prizeBreakdown!.map((range) {
+                          final isFirst =
+                              range.fromRank == 1 && range.toRank == 1;
+                          final rankText = range.fromRank == range.toRank
+                              ? 'Rank ${range.fromRank}'
+                              : 'Rank ${range.fromRank} - ${range.toRank}';
+
+                          return TableRow(
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.08),
+                              border: Border(
+                                  bottom: BorderSide(
+                                      color: Colors.grey.shade100,
+                                      width: 0.5)),
                             ),
                             children: [
                               Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Text('RANK', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: AppColors.primary)),
+                                padding: const EdgeInsets.all(16.0),
+                                child: Text(
+                                  rankText,
+                                  style: TextStyle(
+                                    fontWeight: isFirst
+                                        ? FontWeight.w900
+                                        : FontWeight.w700,
+                                    fontSize: 14,
+                                    color: isFirst
+                                        ? const Color(0xFFB8860B)
+                                        : const Color(0xFF1F2937),
+                                  ),
+                                ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Text('WINNINGS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: AppColors.primary), textAlign: TextAlign.right),
+                                padding: const EdgeInsets.all(16.0),
+                                child: Text(
+                                  '₹${range.prizeAmount.toInt()}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 14,
+                                    color: isFirst
+                                        ? Colors.green.shade700
+                                        : const Color(0xFF1F2937),
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
                               ),
                             ],
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPremiumLockedDialog(BuildContext context, ContestModel contest) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: const BorderSide(
+              color: Color(0xFFE5A93B), // Premium Gold Border
+              width: 2.0,
+            ),
+          ),
+          backgroundColor: const Color(0xFF11141B), // Luxurious Dark Background
+          surfaceTintColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              gradient: RadialGradient(
+                center: Alignment.topCenter,
+                radius: 1.5,
+                colors: [
+                  const Color(0xFF251F14), // Subtle gold glow at top
+                  const Color(0xFF11141B), // Solid dark bottom
+                ],
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Crown Icon with glow effect
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5A93B).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE5A93B).withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.workspace_premium_rounded,
+                    size: 50,
+                    color: Color(0xFFFFAE19), // Vivid premium golden
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Premium Tag
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFAE19), Color(0xFFE5A93B)],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'PREMIUM CONTEST',
+                    style: TextStyle(
+                      color: Color(0xFF11141B),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Title
+                Text(
+                  contest.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                
+                // Status - Coming Soon
+                Text(
+                  'Coming Soon',
+                  style: TextStyle(
+                    color: const Color(0xFFFFAE19).withValues(alpha: 0.9),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Explanation text
+                const Text(
+                  'This exclusive premium contest will unlock shortly! Get your teams ready to compete for elite rewards.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFFA0A5B5),
+                    fontSize: 14,
+                    height: 1.5,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // Close button with golden styling
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: const Color(0xFF11141B),
+                      elevation: 0,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFAE19), Color(0xFFE5A93B)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFE5A93B).withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
-                          ...contest.prizeBreakdown!.map((range) {
-                            final isFirst = range.fromRank == 1 && range.toRank == 1;
-                            final rankText = range.fromRank == range.toRank 
-                              ? 'Rank ${range.fromRank}' 
-                              : 'Rank ${range.fromRank} - ${range.toRank}';
-                              
-                            return TableRow(
-                              decoration: BoxDecoration(
-                                border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 0.5)),
-                              ),
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Row(
-                                    children: [
-                                      if (isFirst) ...[
-                                        const Text('🏆', style: TextStyle(fontSize: 14)),
-                                        const SizedBox(width: 6),
-                                      ],
-                                      Text(
-                                        rankText,
-                                        style: TextStyle(
-                                          fontWeight: isFirst ? FontWeight.w900 : FontWeight.w700,
-                                          fontSize: 14,
-                                          color: isFirst ? const Color(0xFFB8860B) : const Color(0xFF1F2937),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Text(
-                                    '₹${range.prizeAmount.toInt()}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 14,
-                                      color: isFirst ? Colors.green.shade700 : const Color(0xFF1F2937),
-                                    ),
-                                    textAlign: TextAlign.right,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }).toList(),
                         ],
+                      ),
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'GOT IT',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ],
-              const SizedBox(height: 24),
-            ],
+                ),
+              ],
+            ),
           ),
         );
       },

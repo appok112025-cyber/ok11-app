@@ -186,7 +186,7 @@ class SubmissionRepository {
       DateTime? matchTime;
       if (matchTimeStr != null) {
         try {
-          matchTime = DateTime.parse(matchTimeStr).toLocal();
+          matchTime = DateTime.parse(matchTimeStr).toUtc().add(const Duration(hours: 5, minutes: 30));
         } catch (e) {
           matchTime = null;
         }
@@ -195,7 +195,7 @@ class SubmissionRepository {
       String dateStr = 'TBD';
       String timeStr = 'TBD';
       if (matchTime != null) {
-        final now = DateTime.now();
+        final now = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
         final matchDate = DateTime(
           matchTime.year,
           matchTime.month,
@@ -220,7 +220,7 @@ class SubmissionRepository {
 
         var hour = matchTime.hour;
         final minute = matchTime.minute;
-        final period = hour >= 12 ? 'pm' : 'am';
+        final period = hour >= 12 ? 'PM' : 'AM';
         if (hour > 12) {
           hour -= 12;
         } else if (hour == 0) {

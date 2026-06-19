@@ -208,6 +208,45 @@ class ContestRepository {
     }
   }
 
+  String _formatDate(DateTime dateTime) {
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final month = dateTime.month.toString().padLeft(2, '0');
+    final year = dateTime.year.toString().substring(2);
+    return '$day-$month-$year';
+  }
+
+  String _formatRelativeDate(DateTime matchTime, DateTime now) {
+    final matchDate = DateTime(matchTime.year, matchTime.month, matchTime.day);
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final tomorrow = today.add(const Duration(days: 1));
+
+    if (matchDate == today) {
+      return 'Today';
+    } else if (matchDate == yesterday) {
+      return 'Yesterday';
+    } else if (matchDate == tomorrow) {
+      return 'Tomorrow';
+    } else {
+      return _formatDate(matchTime);
+    }
+  }
+
+  String _formatTime(DateTime dateTime) {
+    var hour = dateTime.hour;
+    final minute = dateTime.minute;
+    final period = hour >= 12 ? 'PM' : 'AM';
+
+    if (hour > 12) {
+      hour -= 12;
+    } else if (hour == 0) {
+      hour = 12;
+    }
+
+    final minuteStr = minute.toString().padLeft(2, '0');
+    return '$hour:$minuteStr $period';
+  }
+
   MatchData? _parseMatchFromContestEntry(
     Map<String, dynamic> matchJson, {
     int score = 0,
@@ -251,9 +290,16 @@ class ContestRepository {
       String dateStr = 'TBD';
       String timeStr = 'TBD';
       if (matchTimeStr != null) {
-        final matchTime = DateTime.parse(matchTimeStr).toLocal();
-        dateStr = '${matchTime.day}/${matchTime.month}/${matchTime.year}';
-        timeStr = '${matchTime.hour}:${matchTime.minute.toString().padLeft(2, '0')}';
+        try {
+          final matchTime = DateTime.parse(matchTimeStr).toUtc().add(const Duration(hours: 5, minutes: 30));
+          final now = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
+          dateStr = _formatRelativeDate(matchTime, now);
+          timeStr = _formatTime(matchTime);
+        } catch (e) {
+          final matchTime = DateTime.parse(matchTimeStr).toLocal();
+          dateStr = '${matchTime.day}/${matchTime.month}/${matchTime.year}';
+          timeStr = '${matchTime.hour}:${matchTime.minute.toString().padLeft(2, '0')}';
+        }
       }
 
       return MatchData(

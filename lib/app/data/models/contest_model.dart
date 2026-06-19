@@ -152,11 +152,13 @@ class MyJoinedItem {
   final ContestModel? contest;
   final double? points;
   final int? rank;
+  final int contestCount;
 
   MyJoinedItem({
     required this.match,
     this.contest,
     this.points,
     this.rank,
+    this.contestCount = 1,
   });
 }

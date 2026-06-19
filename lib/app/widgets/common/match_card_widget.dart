@@ -103,29 +103,27 @@ class MatchCardWidget extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (!isLive && !isCompleted && match.status != MatchStatus.completed && match.status != MatchStatus.live) ...[
-                            const SizedBox(height: 14),
-                            RichText(
-                              textAlign: TextAlign.center,
-                              text: TextSpan(
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey.shade600,
-                                ),
-                                children: [
-                                  const TextSpan(text: 'Today, '),
-                                  TextSpan(
-                                    text: match.time,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
+                          const SizedBox(height: 14),
+                          RichText(
+                            textAlign: TextAlign.center,
+                            text: TextSpan(
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey.shade600,
                               ),
+                              children: [
+                                TextSpan(text: '${match.date}, '),
+                                TextSpan(
+                                  text: match.time,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ],
                       ),
                     ),

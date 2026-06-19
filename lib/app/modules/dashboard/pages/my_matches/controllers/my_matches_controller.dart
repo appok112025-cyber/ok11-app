@@ -56,15 +56,48 @@ class MyMatchesController extends GetxController {
         }
       }
 
-      upcomingMatches.value = allItems
+      final Map<String, List<MyJoinedItem>> grouped = {};
+      final List<MyJoinedItem> noIdItems = [];
+      for (var item in allItems) {
+        final mid = item.match.id;
+        if (mid != null && mid.isNotEmpty) {
+          grouped.putIfAbsent(mid, () => []).add(item);
+        } else {
+          noIdItems.add(item);
+        }
+      }
+
+      final List<MyJoinedItem> uniqueItems = [];
+      for (var entry in grouped.entries) {
+        final list = entry.value;
+        list.sort((a, b) {
+          if (a.rank != null && b.rank != null) {
+            return a.rank!.compareTo(b.rank!);
+          }
+          if (a.rank != null) return -1;
+          if (b.rank != null) return 1;
+          return 0;
+        });
+        final bestItem = list.first;
+        uniqueItems.add(MyJoinedItem(
+          match: bestItem.match,
+          contest: bestItem.contest,
+          points: bestItem.points,
+          rank: bestItem.rank,
+          contestCount: list.length,
+        ));
+      }
+      uniqueItems.addAll(noIdItems);
+
+      upcomingMatches.value = uniqueItems
           .where((item) => item.match.status == MatchStatus.upcoming)
           .toList();
 
-      liveMatches.value = allItems
+      liveMatches.value = uniqueItems
           .where((item) => item.match.status == MatchStatus.live)
           .toList();
 
-      completedMatches.value = allItems
+      completedMatches.value = uniqueItems
           .where((item) => item.match.status == MatchStatus.completed)
           .toList();
 
@@ -118,15 +151,48 @@ class MyMatchesController extends GetxController {
         }
       }
 
-      upcomingMatches.value = allItems
+      final Map<String, List<MyJoinedItem>> grouped = {};
+      final List<MyJoinedItem> noIdItems = [];
+      for (var item in allItems) {
+        final mid = item.match.id;
+        if (mid != null && mid.isNotEmpty) {
+          grouped.putIfAbsent(mid, () => []).add(item);
+        } else {
+          noIdItems.add(item);
+        }
+      }
+
+      final List<MyJoinedItem> uniqueItems = [];
+      for (var entry in grouped.entries) {
+        final list = entry.value;
+        list.sort((a, b) {
+          if (a.rank != null && b.rank != null) {
+            return a.rank!.compareTo(b.rank!);
+          }
+          if (a.rank != null) return -1;
+          if (b.rank != null) return 1;
+          return 0;
+        });
+        final bestItem = list.first;
+        uniqueItems.add(MyJoinedItem(
+          match: bestItem.match,
+          contest: bestItem.contest,
+          points: bestItem.points,
+          rank: bestItem.rank,
+          contestCount: list.length,
+        ));
+      }
+      uniqueItems.addAll(noIdItems);
+
+      upcomingMatches.value = uniqueItems
           .where((item) => item.match.status == MatchStatus.upcoming)
           .toList();
 
-      liveMatches.value = allItems
+      liveMatches.value = uniqueItems
           .where((item) => item.match.status == MatchStatus.live)
           .toList();
 
-      completedMatches.value = allItems
+      completedMatches.value = uniqueItems
           .where((item) => item.match.status == MatchStatus.completed)
           .toList();
 

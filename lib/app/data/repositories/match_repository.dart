@@ -109,7 +109,7 @@ class MatchRepository {
   String _formatTime(DateTime dateTime) {
     var hour = dateTime.hour;
     final minute = dateTime.minute;
-    final period = hour >= 12 ? 'pm' : 'am';
+    final period = hour >= 12 ? 'PM' : 'AM';
 
     if (hour > 12) {
       hour -= 12;
@@ -144,7 +144,7 @@ class MatchRepository {
           return [];
         }
 
-        final now = DateTime.now();
+        final now = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
 
         final matchesWithTime = matchesList.whereType<Map>().map((matchJson) {
           final match = Map<String, dynamic>.from(matchJson);
@@ -153,7 +153,7 @@ class MatchRepository {
 
           if (matchTimeStr != null) {
             try {
-              matchTime = DateTime.parse(matchTimeStr).toLocal();
+              matchTime = DateTime.parse(matchTimeStr).toUtc().add(const Duration(hours: 5, minutes: 30));
             } catch (e) {
               matchTime = null;
             }
@@ -273,7 +273,7 @@ class MatchRepository {
           return [];
         }
 
-        final now = DateTime.now();
+        final now = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
 
         final matchesWithTime = matchesList.whereType<Map>().map((matchJson) {
           final match = Map<String, dynamic>.from(matchJson);
@@ -282,7 +282,7 @@ class MatchRepository {
 
           if (matchTimeStr != null) {
             try {
-              matchTime = DateTime.parse(matchTimeStr).toLocal();
+              matchTime = DateTime.parse(matchTimeStr).toUtc().add(const Duration(hours: 5, minutes: 30));
             } catch (e) {
               matchTime = null;
             }
@@ -550,13 +550,13 @@ class MatchRepository {
           return null;
         }
 
-        final now = DateTime.now();
+        final now = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
         final matchTimeStr = match['matchTime'] as String?;
         DateTime? matchTime;
 
         if (matchTimeStr != null) {
           try {
-            matchTime = DateTime.parse(matchTimeStr).toLocal();
+            matchTime = DateTime.parse(matchTimeStr).toUtc().add(const Duration(hours: 5, minutes: 30));
           } catch (e) {
             matchTime = null;
           }

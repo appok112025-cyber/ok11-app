@@ -100,17 +100,27 @@ class JoinedContestCardWidget extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (isUpcoming) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              'Today, ${match.time}',
+                          const SizedBox(height: 6),
+                          RichText(
+                            textAlign: TextAlign.center,
+                            text: TextSpan(
                               style: TextStyle(
                                 fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey.shade600,
                               ),
+                              children: [
+                                TextSpan(text: '${match.date}, '),
+                                TextSpan(
+                                  text: match.time,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ],
                       ),
                     ),
@@ -200,8 +210,8 @@ class JoinedContestCardWidget extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '1 Contest',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+                                  '${item.contestCount} ${item.contestCount == 1 ? "Contest" : "Contests"}',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
                                 ),
                               ],
                             ),
