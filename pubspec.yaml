@@ -3,7 +3,7 @@ description: "Fan engagement app"
 
 publish_to: "none"
 
-version: 2.2.0+8
+version: 2.2.0+9
 
 environment:
   sdk: ">=3.8.1 <4.0.0"
