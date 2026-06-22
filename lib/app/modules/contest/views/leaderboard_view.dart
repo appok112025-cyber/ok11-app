@@ -451,8 +451,7 @@ Widget _buildLeaderboardTile(BuildContext context, LeaderboardEntryModel entry, 
 }
 
 Widget _buildRankingListCard(BuildContext context, List<LeaderboardEntryModel> entries, String? currentUserId, ContestModel? contest) {
-  final startIndex = entries.length >= 3 ? 3 : entries.length;
-  final remainingEntries = entries.sublist(startIndex);
+  final remainingEntries = entries;
 
   if (remainingEntries.isEmpty) return const SizedBox();
 
@@ -627,16 +626,7 @@ class _LeaderboardViewFragmentState extends State<LeaderboardViewFragment> {
                 child: _buildUserStatsHeader(myEntry),
               ),
               
-              // Top 3 Podium
-              if (controller.leaderboard.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: _buildPodium(
-                    context,
-                    controller.leaderboard.take(3).toList(),
-                    currentUserId,
-                    controller.contests.firstWhereOrNull((c) => c.id == controller.joinedContestIds.first),
-                  ),
-                ),
+              // Top 3 Podium removed
               
               // Remaining participants
               SliverToBoxAdapter(
@@ -761,16 +751,7 @@ class _LeaderboardViewState extends State<LeaderboardView> {
                         child: _buildUserStatsHeader(myEntry),
                       ),
 
-                      // Top 3 Podium
-                      if (controller.leaderboard.isNotEmpty)
-                        SliverToBoxAdapter(
-                          child: _buildPodium(
-                            context,
-                            controller.leaderboard.take(3).toList(),
-                            currentUserId,
-                            widget.contest,
-                          ),
-                        ),
+                      // Top 3 Podium removed
 
                       // Remaining Participants
                       SliverToBoxAdapter(

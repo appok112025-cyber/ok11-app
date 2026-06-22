@@ -40,15 +40,7 @@ class JoinedContestCardWidget extends StatelessWidget {
           onTap: isLoading
               ? null
               : () {
-                  if (contest != null) {
-                    if (isUpcoming) {
-                      Get.toNamed(Routes.MATCH_DETAIL, arguments: match);
-                    } else {
-                      Get.to(() => LeaderboardView(contest: contest, match: match));
-                    }
-                  } else {
-                    Get.toNamed(Routes.MATCH_DETAIL, arguments: match);
-                  }
+                  Get.toNamed(Routes.MATCH_DETAIL, arguments: match);
                 },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -132,40 +124,7 @@ class JoinedContestCardWidget extends StatelessWidget {
 
                     // Completed stats on the right side if completed
                     if (isCompleted) ...[
-                      () {
-                        final double prizeAmount = contest != null
-                            ? (contest.prizeBreakdown == null || contest.prizeBreakdown!.isEmpty)
-                                ? (item.rank == 1 ? contest.firstPrize : 0.0)
-                                : contest.prizeBreakdown!
-                                    .firstWhere(
-                                      (r) => (item.rank ?? 0) >= r.fromRank && (item.rank ?? 0) <= r.toRank,
-                                      orElse: () => PrizeRange(fromRank: 0, toRank: 0, prizeAmount: 0.0),
-                                    )
-                                    .prizeAmount
-                            : 0.0;
-                        return Column(
-                           crossAxisAlignment: CrossAxisAlignment.end,
-                           children: [
-                            Text(
-                              'Won ₹${prizeAmount.toInt()}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Rank #${item.rank ?? 0}',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        );
-                      }(),
+                      const SizedBox(),
                     ],
                   ],
                 ),
@@ -236,34 +195,74 @@ class JoinedContestCardWidget extends StatelessWidget {
                     ),
                   ),
                 if (isCompleted)
-                  Container(
-                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Your Fan engage points',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade700,
-                          ),
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Rank #${item.rank ?? 0}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                            () {
+                              final double prizeAmount = contest != null
+                                  ? (contest.prizeBreakdown == null || contest.prizeBreakdown!.isEmpty)
+                                      ? (item.rank == 1 ? contest.firstPrize : 0.0)
+                                      : contest.prizeBreakdown!
+                                          .firstWhere(
+                                            (r) => (item.rank ?? 0) >= r.fromRank && (item.rank ?? 0) <= r.toRank,
+                                            orElse: () => PrizeRange(fromRank: 0, toRank: 0, prizeAmount: 0.0),
+                                          )
+                                          .prizeAmount
+                                  : 0.0;
+                              return Text(
+                                'Won ₹${prizeAmount.toInt()}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.primary,
+                                ),
+                              );
+                            }(),
+                          ],
                         ),
-                        Text(
-                          '${item.points?.toStringAsFixed(0) ?? '0'} pts',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.primary,
-                          ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ],
-                    ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Your Fan engage points',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                            Text(
+                              '${item.points?.toStringAsFixed(0) ?? '0'} pts',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
               ],
             ],
